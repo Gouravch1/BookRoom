@@ -16,4 +16,7 @@ public class BookResponse {
     private String isbn;
     private String language;
     private String source;
+    private Integer currentPage;
+    private Integer totalPages;
+    private Double progressPercent;
 }

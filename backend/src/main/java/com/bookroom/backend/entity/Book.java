@@ -44,6 +44,14 @@ public class Book {
 
     private LocalDateTime updatedAt;
 
+    @Column(nullable = true)
+    private Integer currentPage;
+
+    @Column(nullable = true)
+    private Integer totalPages;
+
+    private Double progressPercent;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
