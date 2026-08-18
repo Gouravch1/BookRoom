@@ -50,7 +50,7 @@ public class AuthService {
 
     //Login
     public AuthResponse login(LoginRequest loginRequest){
-        User user = userRepository.findByEmail(loginRequest.getEmail()).orElseThrow(() -> new RuntimeException("Invalid Email or Password"));
+        User user = userRepository.findByEmail(loginRequest.getEmail()).orElseThrow(() -> new InvalidCredentialsException("Invalid Email or Password"));
         boolean passwordMatches = passwordEncoder.matches(
                 loginRequest.getPassword(),
                 user.getPassword()

@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -41,15 +42,13 @@ public class BookService {
                 .isbn(book.getIsbn())
                 .language(book.getLanguage())
                 .source(book.getSource())
-                .currentPage(book.getCurrentPage())
                 .totalPages(book.getTotalPages())
-                .progressPercent(book.getProgressPercent())
                 .build();
     }
 
     // Create Book
     public BookResponse createBook(String email, BookRequest request) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("user not found"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("user/email not found"));
         Book book = Book.builder()
                 .title(request.getTitle())
                 .author(request.getAuthor())
@@ -63,57 +62,34 @@ public class BookService {
                 .build();
         Book savedBook = bookRepository.save(book);
 
-        return BookResponse.builder()
-                .id(savedBook.getId())
-                .title(savedBook.getTitle())
-                .author(savedBook.getAuthor())
-                .description(savedBook.getDescription())
-                .coverUrl(savedBook.getCoverUrl())
-                .pdfUrl(savedBook.getPdfUrl())
-                .isbn(savedBook.getIsbn())
-                .language(savedBook.getLanguage())
-                .source(savedBook.getSource())
-                .build();
+        return mapToResponse(savedBook);
     }
 
     // Get All Books
     public List<BookResponse> getAllBooks() {
 
-        return bookRepository.findAll()
+        return  bookRepository.findAll()
                 .stream()
-                .map(book -> BookResponse.builder()
-                        .id(book.getId())
-                        .title(book.getTitle())
-                        .author(book.getAuthor())
-                        .description(book.getDescription())
-                        .coverUrl(book.getCoverUrl())
-                        .pdfUrl(book.getPdfUrl())
-                        .isbn(book.getIsbn())
-                        .language(book.getLanguage())
-                        .source(book.getSource())
-                        .build())
+                .map(this::mapToResponse)
                 .toList();
     }
 
-
     // Delete Book
-    public void deleteBook(
-            Long bookId,
-            String email) {
-
+    public void deleteBook(Long bookId, String email) {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() ->
-                        new BookNotFoundException(
-                                "Book not found"
-                        )
+                        new BookNotFoundException("Book not found")
                 );
-
         if (!book.getUploadedBy().getEmail().equals(email)) {
             throw new BookAccessDeniedException(
                     "You are not allowed to delete this book"
             );
         }
-
+        // Delete actual PDF from Cloudinary
+        if (book.getPdfUrl() != null) {
+            fileStorageService.delete(book.getPdfUrl());
+        }
+        // Delete book metadata from PostgreSQL
         bookRepository.delete(book);
     }
 
@@ -169,17 +145,9 @@ public class BookService {
     // Get book by id (Authenticated)
     public BookResponse getBookById(Long id , String email){
         Book book = bookRepository.findById(id).orElseThrow(() -> new BookNotFoundException("Book not found"));
-        if(!book.getUploadedBy().getEmail().equals(email)) throw new RuntimeException("You are not allowed to access this book");
+        if(!book.getUploadedBy().getEmail().equals(email)) throw new BookAccessDeniedException("You are not allowed to access this book");
         return mapToResponse(book);
 
-    }
-
-    // Delete book by id (Authenticated)
-    public void deleteBookById(Long id , String email){
-        Book book = bookRepository.findById(id).orElseThrow(() -> new BookNotFoundException("Book not found"));
-        if(!book.getUploadedBy().getEmail().equals(email)) throw new RuntimeException("You are not allowed to access this book");
-        fileStorageService.delete(book.getPdfUrl());
-        bookRepository.delete(book);
     }
 
     // Update book (Authenticated)
@@ -229,27 +197,6 @@ public class BookService {
         return mapToResponse(updatedBook);
     }
 
-
-    // Update progress
-    public BookResponse updateProgress(Long id, Integer currentPage, String email) {
-
-        Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Book not found"));
-
-        if (!book.getUploadedBy().getEmail().equals(email)) {
-            throw new RuntimeException("Not allowed");
-        }
-
-        if (currentPage > book.getTotalPages() || currentPage < 0) {
-            throw new RuntimeException("Invalid page number");
-        }
-
-        book.setCurrentPage(currentPage);
-        book.setProgressPercent((currentPage * 100.0) / book.getTotalPages());
-
-        Book saved = bookRepository.save(book);
-        return mapToResponse(saved);
-    }
 
 
 }

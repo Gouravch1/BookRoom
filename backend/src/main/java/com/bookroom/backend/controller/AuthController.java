@@ -4,7 +4,6 @@ import com.bookroom.backend.dto.AuthResponse;
 import com.bookroom.backend.dto.LoginRequest;
 import com.bookroom.backend.dto.RegisterRequest;
 import com.bookroom.backend.dto.UserResponse;
-import com.bookroom.backend.entity.User;
 import com.bookroom.backend.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

@@ -24,7 +24,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<Map<String , String>> handleInvalidCredentials(InvalidCredentialsException exception){
         return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
+                .status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("error" , exception.getMessage()));
     }
 
@@ -45,7 +45,7 @@ public class GlobalExceptionHandler {
             BookAccessDeniedException ex) {
 
         return ResponseEntity
-                .status(HttpStatus.FORBIDDEN)
+                .status(HttpStatus.BAD_REQUEST)
                 .body(Map.of(
                         "message",
                         ex.getMessage()

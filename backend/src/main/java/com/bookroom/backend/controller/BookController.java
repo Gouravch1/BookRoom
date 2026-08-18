@@ -108,14 +108,5 @@ public class BookController {
         return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("/{id}/progress")
-    public ResponseEntity<BookResponse> updateProgress(
-            @PathVariable Long id,
-            @RequestParam Integer currentPage,
-            Authentication authentication) {
-
-        BookResponse response = bookService.updateProgress(id, currentPage, authentication.getName());
-        return ResponseEntity.ok(response);
-    }
 
 }
