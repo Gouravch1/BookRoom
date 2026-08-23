@@ -1,20 +1,27 @@
-package com.bookroom.backend.dto;
+package com.bookroom.backend.dto.Request;
 
-import lombok.Builder;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
-@Builder
-public class BookResponse {
+@Setter
+public class BookRequest {
 
-    private Long id;
+    @NotBlank(message = "Title is required")
     private String title;
+
     private String author;
+
     private String description;
+
     private String coverUrl;
+
     private String pdfUrl;
+
     private String isbn;
+
     private String language;
+
     private String source;
-    private Integer totalPages;
 }

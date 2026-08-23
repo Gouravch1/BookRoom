@@ -1,7 +1,7 @@
 package com.bookroom.backend.controller;
 
-import com.bookroom.backend.dto.BookRequest;
-import com.bookroom.backend.dto.BookResponse;
+import com.bookroom.backend.dto.Request.BookRequest;
+import com.bookroom.backend.dto.Response.BookResponse;
 import com.bookroom.backend.service.BookService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

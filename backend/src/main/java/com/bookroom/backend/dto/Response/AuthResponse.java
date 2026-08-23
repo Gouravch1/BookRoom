@@ -1,4 +1,4 @@
-package com.bookroom.backend.dto;
+package com.bookroom.backend.dto.Response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

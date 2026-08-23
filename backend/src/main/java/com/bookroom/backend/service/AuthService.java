@@ -2,10 +2,10 @@ package com.bookroom.backend.service;
 
 import com.bookroom.backend.common.EmailAlreadyExistsException;
 import com.bookroom.backend.common.InvalidCredentialsException;
-import com.bookroom.backend.dto.AuthResponse;
-import com.bookroom.backend.dto.LoginRequest;
-import com.bookroom.backend.dto.RegisterRequest;
-import com.bookroom.backend.dto.UserResponse;
+import com.bookroom.backend.dto.Response.AuthResponse;
+import com.bookroom.backend.dto.Request.LoginRequest;
+import com.bookroom.backend.dto.Request.RegisterRequest;
+import com.bookroom.backend.dto.Response.UserResponse;
 import com.bookroom.backend.entity.User;
 import com.bookroom.backend.repository.UserRepository;
 import com.bookroom.backend.security.JwtService;

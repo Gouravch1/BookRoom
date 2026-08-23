@@ -1,6 +1,6 @@
 package com.bookroom.backend.controller;
 
-import com.bookroom.backend.dto.UserResponse;
+import com.bookroom.backend.dto.Response.UserResponse;
 import com.bookroom.backend.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

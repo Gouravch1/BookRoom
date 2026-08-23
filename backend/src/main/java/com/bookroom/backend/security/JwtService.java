@@ -2,6 +2,7 @@ package com.bookroom.backend.security;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +12,7 @@ import java.util.Date;
 
 
 @Service
+@Slf4j
 public class JwtService {
     private final SecretKey secretKey;
     private final long expiration;
@@ -55,7 +57,7 @@ public class JwtService {
                     .parseSignedClaims(token);
             return true;
         } catch (Exception e) {
-            System.out.println(e);
+            log.error("INVALID JWT TOKEN : {}" , e.getMessage());
             return false;
         }
     }

@@ -2,14 +2,13 @@ package com.bookroom.backend.service;
 
 import com.bookroom.backend.common.BookAccessDeniedException;
 import com.bookroom.backend.common.BookNotFoundException;
-import com.bookroom.backend.dto.ReadingProgressResponse;
+import com.bookroom.backend.dto.Response.ReadingProgressResponse;
 import com.bookroom.backend.entity.Book;
 import com.bookroom.backend.entity.ReadingProgress;
 import com.bookroom.backend.entity.User;
 import com.bookroom.backend.repository.BookRepository;
 import com.bookroom.backend.repository.ReadingProgressRepository;
 import com.bookroom.backend.repository.UserRepository;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 @Service

@@ -12,8 +12,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.bookroom.backend.common.BookAccessDeniedException;
 import com.bookroom.backend.common.BookNotFoundException;
-import com.bookroom.backend.dto.BookRequest;
-import com.bookroom.backend.dto.BookResponse;
+import com.bookroom.backend.dto.Request.BookRequest;
+import com.bookroom.backend.dto.Response.BookResponse;
 import com.bookroom.backend.entity.Book;
 import com.bookroom.backend.entity.User;
 import com.bookroom.backend.repository.BookRepository;
@@ -24,11 +24,13 @@ public class BookService {
     private final BookRepository bookRepository;
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
+    private final BookAccessService bookAccessService;
 
-    public BookService(BookRepository bookRepository, UserRepository userRepository, FileStorageService fileStorageService) {
+    public BookService(BookRepository bookRepository, UserRepository userRepository, FileStorageService fileStorageService, BookAccessService bookAccessService) {
         this.bookRepository = bookRepository;
         this.userRepository = userRepository;
         this.fileStorageService = fileStorageService;
+        this.bookAccessService = bookAccessService;
     }
 
     private BookResponse mapToResponse(Book book) {
@@ -38,7 +40,6 @@ public class BookService {
                 .author(book.getAuthor())
                 .description(book.getDescription())
                 .coverUrl(book.getCoverUrl())
-                .pdfUrl(book.getPdfUrl())
                 .isbn(book.getIsbn())
                 .language(book.getLanguage())
                 .source(book.getSource())
@@ -76,19 +77,19 @@ public class BookService {
 
     // Delete Book
     public void deleteBook(Long bookId, String email) {
+
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() ->
                         new BookNotFoundException("Book not found")
                 );
-        if (!book.getUploadedBy().getEmail().equals(email)) {
-            throw new BookAccessDeniedException(
-                    "You are not allowed to delete this book"
-            );
-        }
+
+        bookAccessService.requireOwner(book, email);
+
         // Delete actual PDF from Cloudinary
-        if (book.getPdfUrl() != null) {
-            fileStorageService.delete(book.getPdfUrl());
+        if (book.getStoragePublicId() != null) {
+            fileStorageService.delete(book.getStoragePublicId());
         }
+
         // Delete book metadata from PostgreSQL
         bookRepository.delete(book);
     }
@@ -117,13 +118,14 @@ public class BookService {
             throw new RuntimeException("Could not read PDF: " + e.getMessage());
         }
 
-        String pdfUrl = fileStorageService.upload(file);
+        StoredFile storedFile = fileStorageService.upload(file);
 
         Book book = Book.builder()
                 .title(title)
                 .author(author)
-                .pdfUrl(pdfUrl)
                 .source("USER_UPLOAD")
+                .storagePublicId(storedFile.publicId())
+                .storageVersion(storedFile.version())
                 .totalPages(totalPages)
                 .uploadedBy(user)
                 .build();
@@ -143,11 +145,16 @@ public class BookService {
     }
 
     // Get book by id (Authenticated)
-    public BookResponse getBookById(Long id , String email){
-        Book book = bookRepository.findById(id).orElseThrow(() -> new BookNotFoundException("Book not found"));
-        if(!book.getUploadedBy().getEmail().equals(email)) throw new BookAccessDeniedException("You are not allowed to access this book");
-        return mapToResponse(book);
+    public BookResponse getBookById(Long id, String email) {
 
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() ->
+                        new BookNotFoundException("Book not found")
+                );
+
+        bookAccessService.requireOwner(book, email);
+
+        return mapToResponse(book);
     }
 
     // Update book (Authenticated)
@@ -156,9 +163,7 @@ public class BookService {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new BookNotFoundException("Book not found"));
 
-        if (!book.getUploadedBy().getEmail().equals(email)) {
-            throw new BookAccessDeniedException("You are not allowed to modify this book");
-        }
+        bookAccessService.requireOwner(book, email);
 
         if (request.getTitle() != null && !request.getTitle().isEmpty()) {
             book.setTitle(request.getTitle());

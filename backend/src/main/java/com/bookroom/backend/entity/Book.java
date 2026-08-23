@@ -30,6 +30,10 @@ public class Book {
 
     private String pdfUrl;
 
+    private String storagePublicId;
+
+    private Integer storageVersion;
+
     private String isbn;
 
     private String language;

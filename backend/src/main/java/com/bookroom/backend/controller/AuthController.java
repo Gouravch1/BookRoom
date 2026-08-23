@@ -1,9 +1,9 @@
 package com.bookroom.backend.controller;
 
-import com.bookroom.backend.dto.AuthResponse;
-import com.bookroom.backend.dto.LoginRequest;
-import com.bookroom.backend.dto.RegisterRequest;
-import com.bookroom.backend.dto.UserResponse;
+import com.bookroom.backend.dto.Response.AuthResponse;
+import com.bookroom.backend.dto.Request.LoginRequest;
+import com.bookroom.backend.dto.Request.RegisterRequest;
+import com.bookroom.backend.dto.Response.UserResponse;
 import com.bookroom.backend.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

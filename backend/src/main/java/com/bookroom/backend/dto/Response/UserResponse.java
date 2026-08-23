@@ -1,8 +1,7 @@
-package com.bookroom.backend.dto;
+package com.bookroom.backend.dto.Response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.Getter;
 
 @Getter
