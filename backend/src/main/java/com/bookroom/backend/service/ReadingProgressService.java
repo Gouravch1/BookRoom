@@ -30,15 +30,14 @@ public class ReadingProgressService {
     private final UserRepository userRepository;
     private final BookRepository bookRepository;
     private final ReadingProgressRepository readingProgressRepository;
+    private final BookAccessService bookAccessService;
 
-
-    public ReadingProgressService(UserRepository userRepository, BookRepository bookRepository, ReadingProgressRepository readingProgressRepository) {
+    public ReadingProgressService(UserRepository userRepository, BookRepository bookRepository, ReadingProgressRepository readingProgressRepository, BookAccessService bookAccessService) {
         this.userRepository = userRepository;
         this.bookRepository = bookRepository;
         this.readingProgressRepository = readingProgressRepository;
+        this.bookAccessService = bookAccessService;
     }
-
-
 
     // update reading progress
     public ReadingProgressResponse updateProgress(Long bookId , Integer currentPage , String email){
@@ -49,11 +48,7 @@ public class ReadingProgressService {
                 ()-> new BookNotFoundException("book not found")
         );
 
-        if (!book.getUploadedBy().getEmail().equals(email)) {
-            throw new BookAccessDeniedException(
-                    "You are not allowed to access this book"
-            );
-        }
+        bookAccessService.requireReadAccess(book, email);
 
         if (book.getTotalPages() == null || book.getTotalPages() <= 0) {
             throw new IllegalStateException(
@@ -101,11 +96,7 @@ public class ReadingProgressService {
                 ()-> new BookNotFoundException("book not found")
         );
 
-        if (!book.getUploadedBy().getEmail().equals(email)) {
-            throw new BookAccessDeniedException(
-                    "You are not allowed to access this book"
-            );
-        }
+        bookAccessService.requireReadAccess(book, email);
 
         if (book.getTotalPages() == null || book.getTotalPages() <= 0) {
             throw new IllegalStateException(
