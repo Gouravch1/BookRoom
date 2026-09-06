@@ -8,16 +8,19 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        // Primary action – blue palette for a clean professional look
         default:
-          "bg-stone-900 text-stone-50 shadow hover:bg-stone-800 active:scale-[0.98]",
+          "bg-blue-600 text-white shadow hover:bg-blue-700 active:scale-[0.98]",
         destructive:
           "bg-red-600 text-white shadow hover:bg-red-700 active:scale-[0.98]",
+        // Outline variant – subtle blue border
         outline:
-          "border border-stone-200 bg-white shadow-sm hover:bg-stone-50 text-stone-900",
+          "border border-blue-200 bg-white shadow-sm hover:bg-blue-50 text-blue-900",
+        // Secondary – green for secondary actions
         secondary:
-          "bg-stone-100 text-stone-900 shadow-sm hover:bg-stone-200",
-        ghost: "hover:bg-stone-100 text-stone-700 hover:text-stone-900",
-        link: "text-stone-900 underline-offset-4 hover:underline",
+          "bg-green-100 text-green-900 shadow-sm hover:bg-green-200",
+        ghost: "hover:bg-gray-100 text-gray-700 hover:text-gray-900",
+        link: "text-blue-600 underline-offset-4 hover:underline",
       },
       size: {
         default: "h-9 px-4 py-2",
