@@ -33,14 +33,14 @@ export function LibraryHeader() {
     : "?";
 
   return (
-    <header className="sticky top-0 z-40 border-b border-stone-200 bg-white/95 backdrop-blur-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
+     <header className="sticky top-0 z-40 border-b border-stone-200 bg-white/95 backdrop-blur-sm">
+       <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14 sm:h-16">
         {/* Logo */}
         <Link href="/library" className="flex items-center gap-2 shrink-0">
-          <div className="w-7 h-7 bg-stone-900 rounded-md flex items-center justify-center">
+         <div className="w-7 h-7 bg-blue-600 rounded-md flex items-center justify-center">
             <BookOpen className="w-3.5 h-3.5 text-white" />
           </div>
-          <span className="text-base font-semibold text-stone-900 tracking-tight">
+           <span className="text-base font-semibold text-gray-900 tracking-tight">
             BookRoom
           </span>
         </Link>
@@ -56,14 +56,14 @@ export function LibraryHeader() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button
-                className="flex items-center gap-1.5 rounded-full border border-stone-200 bg-stone-50 hover:bg-stone-100 transition-colors px-2 py-1"
+               <button
+                 className="flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors px-2 py-1"
                 id="user-menu-trigger"
               >
-                <div className="w-6 h-6 rounded-full bg-stone-800 flex items-center justify-center text-white text-xs font-semibold shrink-0">
+                 <div className="w-6 h-6 rounded-full bg-gray-800 flex items-center justify-center text-white text-xs font-semibold shrink-0">
                   {initials}
                 </div>
-                <ChevronDown className="w-3 h-3 text-stone-400" />
+                 <ChevronDown className="w-3 h-3 text-gray-400" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
