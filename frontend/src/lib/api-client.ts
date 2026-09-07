@@ -1,6 +1,6 @@
 import axios, { AxiosError, type AxiosRequestConfig } from "axios";
 
-const BASE_URL = "http://localhost:8080";
+const BASE_URL = "https://mangalia-bookroom-78744507079.asia-south1.run.app";
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
