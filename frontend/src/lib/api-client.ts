@@ -58,8 +58,18 @@ export function getApiErrorMessage(error: unknown): string {
 
     if (typeof data === "string" && data.trim()) return data;
     if (typeof data === "object" && data !== null) {
-      const msg = (data as Record<string, unknown>).message || (data as Record<string, unknown>).error;
+      const rec = data as Record<string, unknown>;
+      const msg = rec.message || rec.error;
       if (typeof msg === "string" && msg.trim()) return msg;
+      if (Array.isArray(rec.errors) && rec.errors.length > 0) {
+        const first = rec.errors[0];
+        if (typeof first === "string") return first;
+        if (typeof first === "object" && first !== null) {
+          const firstObj = first as Record<string, unknown>;
+          if (typeof firstObj.defaultMessage === "string") return firstObj.defaultMessage;
+          if (typeof firstObj.message === "string") return firstObj.message;
+        }
+      }
     }
 
     if (status === 401) return "Invalid email or password.";

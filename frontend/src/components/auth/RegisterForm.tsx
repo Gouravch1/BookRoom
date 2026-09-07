@@ -24,8 +24,8 @@ export function RegisterForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    if (password.length < 7) {
+      setError("Password must be at least 7 characters.");
       return;
     }
     setIsLoading(true);
@@ -88,7 +88,7 @@ export function RegisterForm() {
               id="password"
               type={showPassword ? "text" : "password"}
               autoComplete="new-password"
-              placeholder="Min. 6 characters"
+              placeholder="Min. 7 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
