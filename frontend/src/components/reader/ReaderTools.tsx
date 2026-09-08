@@ -21,7 +21,7 @@ const tools: Tool[] = [
     id: "highlight",
     icon: <Highlighter className="w-4 h-4" />,
     label: "Highlight",
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     id: "note",

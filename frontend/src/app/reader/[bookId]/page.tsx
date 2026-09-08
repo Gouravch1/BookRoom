@@ -7,10 +7,22 @@ import { useReader } from "@/hooks/useReader";
 import { ReaderHeader } from "@/components/reader/ReaderHeader";
 import { ReaderControls } from "@/components/reader/ReaderControls";
 import { ReaderTools } from "@/components/reader/ReaderTools";
-import { PdfReader } from "@/components/reader/PdfReader";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, BookOpen, Loader2 } from "lucide-react";
 import Link from "next/link";
+
+const PdfReader = dynamic(
+  () => import("@/components/reader/PdfReader").then((m) => m.PdfReader),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    ),
+  }
+);
 
 const ZOOM_STEP = 0.15;
 const MIN_SCALE = 0.5;
@@ -159,6 +171,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
         {/* PDF viewer */}
         <PdfReader
           pdfUrl={book.pdfUrl}
+          bookId={bookId}
           currentPage={currentPage}
           scale={scale}
           onPageCountLoaded={handlePageCountLoaded}

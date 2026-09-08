@@ -34,6 +34,35 @@ body {
   height: auto !important;
 }
 
+/* Ensure the react-pdf Page wrapper doesn't clip highlight overlay */
+.react-pdf__Page {
+  position: relative !important;
+  overflow: visible !important;
+}
+
+/* Text layer must sit above highlight overlay so selection still works.
+   react-pdf already sets z-index on the text layer, but we reinforce it. */
+.react-pdf__Page__textContent {
+  z-index: 3 !important;
+  pointer-events: auto !important;
+}
+
+/* Annotation layer above text layer */
+.react-pdf__Page__annotations {
+  z-index: 4 !important;
+}
+
+/* Highlight toolbar fade-in */
+@keyframes highlight-toolbar-in {
+  from { opacity: 0; transform: translate(-50%, calc(-100% - 4px)); }
+  to   { opacity: 1; transform: translate(-50%, -100%); }
+}
+
+.highlight-toolbar-enter {
+  animation: highlight-toolbar-in 0.12s ease-out both;
+}
+
+
 /* Toast animation */
 @keyframes slide-in-from-bottom-2 {
   from { transform: translateY(8px); opacity: 0; }
