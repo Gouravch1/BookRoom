@@ -5,16 +5,50 @@ import type {
   HighlightColor,
 } from "@/types/highlight";
 
+// In-flight / resolved promise cache per bookId
+const highlightsPromiseCache = new Map<number, Promise<Highlight[]>>();
+
 export const highlightService = {
   /**
    * Fetch all highlights for the current authenticated user for a given book.
+   * Uses an in-flight promise cache to enable parallel prefetching.
    * GET /api/highlights/book/{bookId}
    */
-  async getHighlights(bookId: number): Promise<Highlight[]> {
-    const res = await apiClient.get<Highlight[]>(
-      `/api/highlights/book/${bookId}`
-    );
-    return res.data;
+  getHighlights(bookId: number, forceRefresh = false): Promise<Highlight[]> {
+    if (!forceRefresh && highlightsPromiseCache.has(bookId)) {
+      return highlightsPromiseCache.get(bookId)!;
+    }
+
+    const promise = apiClient
+      .get<Highlight[]>(`/api/highlights/book/${bookId}`)
+      .then((res) => res.data)
+      .catch((err) => {
+        // Remove from cache on failure so next attempt retries
+        highlightsPromiseCache.delete(bookId);
+        throw err;
+      });
+
+    highlightsPromiseCache.set(bookId, promise);
+    return promise;
+  },
+
+  /**
+   * Prefetch highlights early in page lifecycle (runs parallel with book metadata).
+   */
+  prefetchHighlights(bookId: number): void {
+    if (!bookId || isNaN(bookId)) return;
+    this.getHighlights(bookId).catch(() => {});
+  },
+
+  /**
+   * Invalidate highlights cache for a book (e.g. on unmount or refresh).
+   */
+  invalidateCache(bookId?: number): void {
+    if (bookId) {
+      highlightsPromiseCache.delete(bookId);
+    } else {
+      highlightsPromiseCache.clear();
+    }
   },
 
   /**

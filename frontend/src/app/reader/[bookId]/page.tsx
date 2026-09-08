@@ -7,6 +7,7 @@ import { useReader } from "@/hooks/useReader";
 import { ReaderHeader } from "@/components/reader/ReaderHeader";
 import { ReaderControls } from "@/components/reader/ReaderControls";
 import { ReaderTools } from "@/components/reader/ReaderTools";
+import { highlightService } from "@/services/highlight.service";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, BookOpen, Loader2 } from "lucide-react";
@@ -61,10 +62,11 @@ export default function ReaderPage({ params }: ReaderPageProps) {
     }
   }, [authLoading, isAuthenticated, router]);
 
-  // Initialize reader when authenticated
+  // Initialize reader & prefetch highlights in parallel when authenticated
   useEffect(() => {
     if (isAuthenticated && !isNaN(bookId)) {
       initialize();
+      highlightService.prefetchHighlights(bookId);
     }
   }, [isAuthenticated, bookId, initialize]);
 
