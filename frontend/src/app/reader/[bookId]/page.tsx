@@ -14,7 +14,7 @@ import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, BookOpen, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { Toaster as SonnerToaster } from "sonner";
+import { toast, Toaster as SonnerToaster } from "sonner";
 import type { Highlight } from "@/types/highlight";
 
 const PdfReader = dynamic(
@@ -36,10 +36,13 @@ const DEFAULT_SCALE = 1.0;
 
 interface ReaderPageProps {
   params: Promise<{ bookId: string }>;
+  searchParams?: Promise<{ reset?: string; page?: string }>;
 }
 
-export default function ReaderPage({ params }: ReaderPageProps) {
+export default function ReaderPage({ params, searchParams }: ReaderPageProps) {
   const { bookId: bookIdStr } = use(params);
+  const resolvedSearchParams = searchParams ? use(searchParams) : undefined;
+  const isReset = resolvedSearchParams?.reset === "1" || resolvedSearchParams?.page === "1";
   const bookId = parseInt(bookIdStr, 10);
 
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -54,6 +57,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
     errorStatus,
     initialize,
     navigatePage,
+    completeBook,
   } = useReader(bookId);
 
   // Unified highlights state (single source of truth for PDF overlay & Notes panel)
@@ -80,10 +84,10 @@ export default function ReaderPage({ params }: ReaderPageProps) {
   // Initialize reader & prefetch highlights in parallel when authenticated
   useEffect(() => {
     if (isAuthenticated && !isNaN(bookId)) {
-      initialize();
+      initialize(isReset ? 1 : undefined);
       highlightService.prefetchHighlights(bookId);
     }
-  }, [isAuthenticated, bookId, initialize]);
+  }, [isAuthenticated, bookId, initialize, isReset]);
 
   const handleZoomIn = useCallback(() => {
     setScale((s) => Math.min(s + ZOOM_STEP, MAX_SCALE));
@@ -127,6 +131,13 @@ export default function ReaderPage({ params }: ReaderPageProps) {
     setActivePanel((curr) => (curr === panel ? null : panel));
   }, []);
 
+  const handleFinishBook = useCallback(async () => {
+    await completeBook();
+    toast.success("🎉 Congratulations! Book finished.", {
+      description: "You've completed reading this book (100%).",
+      duration: 4000,
+    });
+  }, [completeBook]);
 
   const totalPages = book?.totalPages ?? pdfTotalPages;
 
@@ -247,6 +258,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
         scale={scale}
         onPrev={() => navigatePage(currentPage - 1)}
         onNext={() => navigatePage(currentPage + 1)}
+        onFinish={handleFinishBook}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onFullscreen={handleFullscreen}
@@ -254,4 +266,3 @@ export default function ReaderPage({ params }: ReaderPageProps) {
     </div>
   );
 }
-

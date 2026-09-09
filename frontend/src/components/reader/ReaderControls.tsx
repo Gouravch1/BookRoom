@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ReaderControlsProps {
@@ -9,6 +9,7 @@ interface ReaderControlsProps {
   scale: number;
   onPrev: () => void;
   onNext: () => void;
+  onFinish?: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFullscreen: () => void;
@@ -20,11 +21,13 @@ export function ReaderControls({
   scale,
   onPrev,
   onNext,
+  onFinish,
   onZoomIn,
   onZoomOut,
   onFullscreen,
 }: ReaderControlsProps) {
   const pct = Math.round(scale * 100);
+  const isLastPage = totalPages > 0 && currentPage >= totalPages;
 
   return (
     <div className="border-t border-stone-200 bg-white py-2 px-4 flex items-center justify-between gap-2 flex-wrap">
@@ -45,17 +48,31 @@ export function ReaderControls({
           {currentPage}
           {totalPages > 0 && <span className="text-stone-400"> / {totalPages}</span>}
         </span>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onNext}
-          disabled={totalPages > 0 && currentPage >= totalPages}
-          className="h-8 w-8"
-          id="next-page"
-          aria-label="Next page"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </Button>
+
+        {isLastPage ? (
+          <Button
+            size="sm"
+            onClick={onFinish}
+            className="h-8 px-2.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all"
+            id="finish-book-btn"
+            title="Mark book as finished"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+            Finish Book
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onNext}
+            disabled={isLastPage}
+            className="h-8 w-8"
+            id="next-page"
+            aria-label="Next page"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        )}
       </div>
 
       {/* Zoom + fullscreen */}

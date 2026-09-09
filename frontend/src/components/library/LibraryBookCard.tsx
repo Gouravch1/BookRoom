@@ -11,6 +11,8 @@ import {
   MoreVertical,
   Pencil,
   FileText,
+  CheckCircle2,
+  RotateCcw,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -46,7 +48,13 @@ export function LibraryBookCard({
   const progress = item.progressPercent ?? 0;
   const currentPage = item.currentPage ?? 0;
   const totalPages = item.totalPages ?? 0;
-  const hasStarted = currentPage > 1;
+
+  const isCompleted =
+    totalPages > 0 &&
+    (progress >= 100 || (currentPage >= totalPages && progress >= 99));
+
+  const hasStarted =
+    item.lastReadAt !== null || currentPage > 1 || progress > 0;
 
   async function handleRemove() {
     setIsRemoving(true);
@@ -96,12 +104,20 @@ export function LibraryBookCard({
             </div>
           )}
 
-          {/* Owned badge */}
-          {isOwned && (
-            <div className="absolute top-2 left-2 bg-stone-900/80 text-white text-[10px] font-medium px-1.5 py-0.5 rounded-full backdrop-blur-sm">
-              Yours
-            </div>
-          )}
+          {/* Badges container */}
+          <div className="absolute top-2 left-2 flex flex-col gap-1 items-start">
+            {isOwned && (
+              <span className="bg-stone-900/80 text-white text-[10px] font-medium px-1.5 py-0.5 rounded-full backdrop-blur-sm">
+                Yours
+              </span>
+            )}
+            {isCompleted && (
+              <span className="bg-emerald-600/90 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full backdrop-blur-sm flex items-center gap-1 shadow-sm">
+                <CheckCircle2 className="w-3 h-3" />
+                Completed
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Info */}
@@ -118,27 +134,54 @@ export function LibraryBookCard({
           {/* Progress */}
           {totalPages > 0 && (
             <div className="flex flex-col gap-1">
-              <Progress value={progress} className="h-1" />
-              <div className="flex justify-between text-[10px] text-stone-400">
-                <span>
-                  {hasStarted ? `Page ${currentPage}` : "Not started"}
-                </span>
-                <span>{Math.round(progress)}%</span>
+              <Progress
+                value={isCompleted ? 100 : progress}
+                className={`h-1.5 ${isCompleted ? "[&>div]:bg-emerald-600" : ""}`}
+              />
+              <div className="flex justify-between text-[10px] text-stone-500">
+                {isCompleted ? (
+                  <>
+                    <span className="font-medium text-emerald-600 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> Completed
+                    </span>
+                    <span className="font-semibold text-emerald-600">100%</span>
+                  </>
+                ) : (
+                  <>
+                    <span>
+                      {hasStarted ? `Page ${currentPage}` : "Not started"}
+                    </span>
+                    <span>{Math.round(progress)}%</span>
+                  </>
+                )}
               </div>
             </div>
           )}
 
           {/* Actions */}
           <div className="flex items-center gap-1.5 mt-auto pt-1">
-            <Button
-              size="sm"
-              className="flex-1 h-8 text-xs"
-              onClick={() => router.push(`/reader/${item.bookId}`)}
-              id={`read-book-${item.bookId}`}
-            >
-              <BookOpen className="w-3 h-3 mr-1" />
-              {hasStarted ? "Continue" : "Start Reading"}
-            </Button>
+            {isCompleted ? (
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 h-8 text-xs font-medium border-stone-300 hover:bg-stone-100 text-stone-800"
+                onClick={() => router.push(`/reader/${item.bookId}?reset=1`)}
+                id={`read-again-${item.bookId}`}
+              >
+                <RotateCcw className="w-3 h-3 mr-1 text-stone-500" />
+                Read Again
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                className="flex-1 h-8 text-xs"
+                onClick={() => router.push(`/reader/${item.bookId}`)}
+                id={`read-book-${item.bookId}`}
+              >
+                <BookOpen className="w-3 h-3 mr-1" />
+                {hasStarted ? "Continue" : "Start Reading"}
+              </Button>
+            )}
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -152,6 +195,17 @@ export function LibraryBookCard({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                {hasStarted && (
+                  <>
+                    <DropdownMenuItem
+                      onClick={() => router.push(`/reader/${item.bookId}?reset=1`)}
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      Restart from page 1
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 {isOwned && (
                   <>
                     <DropdownMenuItem onClick={() => setEditOpen(true)}>
