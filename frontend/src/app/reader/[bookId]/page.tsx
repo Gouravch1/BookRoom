@@ -4,14 +4,18 @@ import { useEffect, useState, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useReader } from "@/hooks/useReader";
+import { usePdfHighlights } from "@/hooks/usePdfHighlights";
 import { ReaderHeader } from "@/components/reader/ReaderHeader";
 import { ReaderControls } from "@/components/reader/ReaderControls";
 import { ReaderTools } from "@/components/reader/ReaderTools";
 import { highlightService } from "@/services/highlight.service";
+import { NotesPanel } from "@/components/reader/NotesPanel";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, BookOpen, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { Toaster as SonnerToaster } from "sonner";
+import type { Highlight } from "@/types/highlight";
 
 const PdfReader = dynamic(
   () => import("@/components/reader/PdfReader").then((m) => m.PdfReader),
@@ -52,8 +56,19 @@ export default function ReaderPage({ params }: ReaderPageProps) {
     navigatePage,
   } = useReader(bookId);
 
+  // Unified highlights state (single source of truth for PDF overlay & Notes panel)
+  const {
+    highlights,
+    addHighlight,
+    removeHighlight,
+    changeColor,
+    updateNote,
+  } = usePdfHighlights(bookId);
+
   const [scale, setScale] = useState(DEFAULT_SCALE);
   const [pdfTotalPages, setPdfTotalPages] = useState(0);
+  const [activePanel, setActivePanel] = useState<"highlights" | "notes" | null>(null);
+  const [focusedHighlightId, setFocusedHighlightId] = useState<number | null>(null);
 
   // Auth guard
   useEffect(() => {
@@ -98,6 +113,20 @@ export default function ReaderPage({ params }: ReaderPageProps) {
   const handlePdfLoadError = useCallback((err: Error) => {
     console.error("PDF load error:", err);
   }, []);
+
+  // Jump to page & focus highlight when clicked in Highlights or Notes panel
+  const handleSelectHighlight = useCallback(
+    (highlight: Highlight) => {
+      navigatePage(highlight.pageNumber);
+      setFocusedHighlightId(highlight.id);
+    },
+    [navigatePage]
+  );
+
+  const handleTogglePanel = useCallback((panel: "highlights" | "notes") => {
+    setActivePanel((curr) => (curr === panel ? null : panel));
+  }, []);
+
 
   const totalPages = book?.totalPages ?? pdfTotalPages;
 
@@ -165,24 +194,49 @@ export default function ReaderPage({ params }: ReaderPageProps) {
       id="reader-fullscreen-target"
       className="h-screen flex flex-col bg-stone-100 overflow-hidden"
     >
+      <SonnerToaster richColors position="top-right" />
+
       {/* Header */}
       <ReaderHeader book={book} progress={progress} currentPage={currentPage} />
 
-      {/* Body: PDF + sidebar tools */}
-      <div className="flex-1 flex min-h-0">
+      {/* Body: PDF + Notes panel + sidebar tools */}
+      <div className="flex-1 flex min-h-0 relative overflow-hidden">
         {/* PDF viewer */}
         <PdfReader
           pdfUrl={book.pdfUrl}
           bookId={bookId}
           currentPage={currentPage}
           scale={scale}
+          focusedHighlightId={focusedHighlightId}
+          onClearFocusedHighlight={() => setFocusedHighlightId(null)}
+          highlights={highlights}
+          addHighlight={addHighlight}
+          removeHighlight={removeHighlight}
+          changeColor={changeColor}
+          updateNote={updateNote}
           onPageCountLoaded={handlePageCountLoaded}
           onLoadError={handlePdfLoadError}
         />
 
+        {/* Highlights & Notes Panel */}
+        <NotesPanel
+          highlights={highlights}
+          isOpen={activePanel !== null}
+          activeTab={activePanel ?? "highlights"}
+          onTabChange={(tab) => setActivePanel(tab)}
+          currentPage={currentPage}
+          onClose={() => setActivePanel(null)}
+          onSelectHighlight={handleSelectHighlight}
+          onDeleteHighlight={removeHighlight}
+          onDeleteNote={(id) => updateNote(id, null)}
+        />
+
         {/* Tools sidebar (desktop) */}
         <div className="hidden sm:flex">
-          <ReaderTools />
+          <ReaderTools
+            activePanel={activePanel}
+            onTogglePanel={handleTogglePanel}
+          />
         </div>
       </div>
 
@@ -200,3 +254,4 @@ export default function ReaderPage({ params }: ReaderPageProps) {
     </div>
   );
 }
+

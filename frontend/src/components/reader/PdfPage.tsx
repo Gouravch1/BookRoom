@@ -10,6 +10,7 @@ interface PdfPageProps {
   pageNumber: number;
   width: number;
   highlights: Highlight[];
+  focusedHighlightId?: number | null;
   onHighlightClick: (highlight: Highlight, position: { x: number; y: number }) => void;
   onHighlightColorChange?: (highlightId: number, color: HighlightColor) => void;
 }
@@ -24,6 +25,7 @@ export function PdfPage({
   pageNumber,
   width,
   highlights,
+  focusedHighlightId,
   onHighlightClick,
 }: PdfPageProps) {
   const pageRef = useRef<HTMLDivElement>(null);
@@ -58,8 +60,10 @@ export function PdfPage({
       <HighlightOverlay
         highlights={highlights}
         pageNumber={pageNumber}
+        focusedHighlightId={focusedHighlightId}
         onHighlightClick={onHighlightClick}
       />
     </div>
   );
 }
+

@@ -5,6 +5,7 @@ import type { Highlight, HighlightColor, CreateHighlightRequest } from "@/types/
 import { highlightService } from "@/services/highlight.service";
 import { getApiErrorMessage } from "@/lib/api-client";
 import { toast } from "@/components/ui/toaster";
+import { toast as sonnerToast } from "sonner";
 
 export function usePdfHighlights(bookId: number) {
   const [highlights, setHighlights] = useState<Highlight[]>([]);
@@ -19,6 +20,7 @@ export function usePdfHighlights(bookId: number) {
       setHighlights(data);
     } catch (err) {
       const msg = getApiErrorMessage(err);
+      sonnerToast.error("Couldn't load highlights", { description: msg });
       toast({
         title: "Couldn't load highlights",
         description: msg,
@@ -49,7 +51,8 @@ export function usePdfHighlights(bookId: number) {
         bookId: request.bookId,
         pageNumber: request.pageNumber,
         selectedText: request.selectedText,
-        color: request.color,
+        color: request.color ?? null,
+        note: request.note ?? null,
         rectangles: request.rectangles,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -69,6 +72,7 @@ export function usePdfHighlights(bookId: number) {
         // Rollback optimistic highlight
         setHighlights((prev) => prev.filter((h) => h.id !== tempId));
         const msg = getApiErrorMessage(err);
+        sonnerToast.error("Failed to save highlight", { description: msg });
         toast({
           title: "Failed to save highlight",
           description: msg,
@@ -100,6 +104,7 @@ export function usePdfHighlights(bookId: number) {
           setHighlights((prev) => [...prev, previousHighlight!]);
         }
         const msg = getApiErrorMessage(err);
+        sonnerToast.error("Failed to delete highlight", { description: msg });
         toast({
           title: "Failed to delete highlight",
           description: msg,
@@ -137,6 +142,7 @@ export function usePdfHighlights(bookId: number) {
           );
         }
         const msg = getApiErrorMessage(err);
+        sonnerToast.error("Failed to change highlight color", { description: msg });
         toast({
           title: "Failed to change highlight color",
           description: msg,
@@ -147,11 +153,56 @@ export function usePdfHighlights(bookId: number) {
     [highlights]
   );
 
+  /**
+   * Update or clear the note on an existing highlight.
+   * Uses optimistic update — reverts on failure.
+   */
+  const updateNote = useCallback(
+    async (highlightId: number, note: string | null): Promise<Highlight | null> => {
+      let previous: Highlight | undefined;
+      setHighlights((prev) => {
+        previous = prev.find((h) => h.id === highlightId);
+        return prev.map((h) => (h.id === highlightId ? { ...h, note } : h));
+      });
+
+      try {
+        const updated = await highlightService.updateHighlightNote(
+          highlightId,
+          note
+        );
+        setHighlights((prev) =>
+          prev.map((h) => (h.id === highlightId ? updated : h))
+        );
+        return updated;
+      } catch (err) {
+        // Revert optimistic update
+        if (previous) {
+          setHighlights((prev) =>
+            prev.map((h) => (h.id === highlightId ? previous! : h))
+          );
+        }
+        const msg = getApiErrorMessage(err);
+        sonnerToast.error(note ? "Failed to save note" : "Failed to clear note", {
+          description: msg,
+        });
+        toast({
+          title: note ? "Failed to save note" : "Failed to clear note",
+          description: msg,
+          variant: "destructive",
+        });
+        return null;
+      }
+    },
+    []
+  );
+
   return {
     highlights,
     isLoading,
     addHighlight,
     removeHighlight,
     changeColor,
+    updateNote,
   };
 }
+
