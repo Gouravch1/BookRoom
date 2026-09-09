@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Highlight, HighlightColor } from "@/types/highlight";
 import { getHighlightColorStyle } from "./HighlightOverlay";
+import { StickyNote, Pencil, Trash2, Check, X, CornerDownLeft } from "lucide-react";
 
 const COLORS: { color: HighlightColor; label: string }[] = [
   { color: "YELLOW", label: "Yellow" },
@@ -19,22 +20,51 @@ interface HighlightContextMenuProps {
   position: { x: number; y: number };
   onDelete: (highlightId: number) => void;
   onChangeColor: (highlightId: number, color: HighlightColor) => void;
+  onUpdateNote: (highlightId: number, note: string | null) => void;
   onClose: () => void;
 }
 
 /**
- * Small floating context menu that appears when clicking an existing highlight.
- * Provides delete and color-change options.
+ * Floating context menu that appears when clicking an existing highlight or note marker.
+ * Provides note viewing/editing, note clearing, color changing, and highlight removal.
  */
 export function HighlightContextMenu({
   highlight,
   position,
   onDelete,
   onChangeColor,
+  onUpdateNote,
   onClose,
 }: HighlightContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
-  const isNearTop = position.y < 130;
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const hasNote = Boolean(highlight.note && highlight.note.trim() !== "");
+  const [isEditingNote, setIsEditingNote] = useState(false);
+  const [isAddingNote, setIsAddingNote] = useState(false);
+  const [draftNote, setDraftNote] = useState(highlight.note || "");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const isNearTop = position.y < 160;
+  const clampedX = Math.max(
+    170,
+    Math.min(
+      position.x,
+      typeof window !== "undefined" ? window.innerWidth - 170 : position.x
+    )
+  );
+
+  // Sync draftNote if highlight prop changes
+  useEffect(() => {
+    setDraftNote(highlight.note || "");
+  }, [highlight.note]);
+
+  // Focus textarea when editing/adding note
+  useEffect(() => {
+    if ((isEditingNote || isAddingNote) && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [isEditingNote, isAddingNote]);
 
   // Dismiss on outside click
   useEffect(() => {
@@ -58,26 +88,61 @@ export function HighlightContextMenu({
     return () => document.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
+  const handleSaveNote = async () => {
+    const trimmed = draftNote.trim();
+    setIsSaving(true);
+    try {
+      await onUpdateNote(highlight.id, trimmed || null);
+      setIsEditingNote(false);
+      setIsAddingNote(false);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleClearNote = async () => {
+    setIsSaving(true);
+    try {
+      await onUpdateNote(highlight.id, null);
+      setIsEditingNote(false);
+      setIsAddingNote(false);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+      e.preventDefault();
+      handleSaveNote();
+    }
+  };
+
   return (
     <div
       ref={menuRef}
-      role="menu"
-      aria-label="Highlight options"
+      role="dialog"
+      aria-label="Highlight & Note options"
       style={{
         position: "fixed",
-        left: position.x,
+        left: clampedX,
         top: isNearTop ? position.y + 12 : position.y - 8,
         transform: isNearTop ? "translate(-50%, 0)" : "translate(-50%, -100%)",
         zIndex: 9998,
         backgroundColor: "white",
         border: "1px solid #e7e5e4",
-        borderRadius: 10,
-        padding: "4px",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.14), 0 1px 4px rgba(0,0,0,0.08)",
-        minWidth: 160,
+        borderRadius: 12,
+        padding: "8px",
+        boxShadow: "0 10px 25px -5px rgba(0,0,0,0.18), 0 8px 10px -6px rgba(0,0,0,0.1)",
+        minWidth: 260,
+        maxWidth: 320,
       }}
       // Prevent mousedown from clearing selection or losing focus
-      onMouseDown={(e) => e.stopPropagation()}
+      onMouseDown={(e) => {
+        if ((e.target as HTMLElement).tagName !== "TEXTAREA") {
+          e.stopPropagation();
+        }
+      }}
     >
       {/* Arrow */}
       <div
@@ -109,7 +174,263 @@ export function HighlightContextMenu({
         }}
       />
 
-      {/* Color section */}
+      {/* Selected text snippet preview */}
+      {highlight.selectedText && (
+        <div
+          style={{
+            padding: "4px 8px 6px",
+            borderBottom: "1px solid #f5f5f4",
+            marginBottom: 6,
+          }}
+        >
+          <p
+            style={{
+              fontSize: 11,
+              fontStyle: "italic",
+              color: "#78716c",
+              margin: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+            }}
+          >
+            &ldquo;{highlight.selectedText}&rdquo;
+          </p>
+        </div>
+      )}
+
+      {/* ─── Note Section ────────────────────────────────────────── */}
+      {hasNote && !isEditingNote ? (
+        <div
+          style={{
+            backgroundColor: "#fefce8",
+            border: "1px solid #fef08a",
+            borderRadius: 8,
+            padding: "8px 10px",
+            marginBottom: 8,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 4,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <StickyNote className="w-3.5 h-3.5 text-amber-600" />
+              <span style={{ fontSize: 11, fontWeight: 600, color: "#854d0e" }}>
+                Note
+              </span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <button
+                type="button"
+                id="note-edit-btn"
+                title="Edit note"
+                onClick={() => {
+                  setDraftNote(highlight.note || "");
+                  setIsEditingNote(true);
+                }}
+                style={{
+                  padding: "3px 6px",
+                  fontSize: 11,
+                  fontWeight: 500,
+                  color: "#78716c",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  borderRadius: 4,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 3,
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(0,0,0,0.05)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+                }}
+              >
+                <Pencil className="w-3 h-3" />
+                Edit
+              </button>
+              <button
+                type="button"
+                id="note-clear-btn"
+                title="Clear note only (keep highlight)"
+                onClick={handleClearNote}
+                disabled={isSaving}
+                style={{
+                  padding: "3px 6px",
+                  fontSize: 11,
+                  fontWeight: 500,
+                  color: "#ef4444",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  borderRadius: 4,
+                  cursor: "pointer",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = "#fee2e2";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+                }}
+              >
+                Clear Note
+              </button>
+            </div>
+          </div>
+          <p
+            style={{
+              fontSize: 12,
+              lineHeight: 1.4,
+              color: "#1c1917",
+              margin: 0,
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+            }}
+          >
+            {highlight.note}
+          </p>
+        </div>
+      ) : isEditingNote || isAddingNote ? (
+        <div
+          style={{
+            backgroundColor: "#fafaf9",
+            border: "1px solid #e7e5e4",
+            borderRadius: 8,
+            padding: "8px",
+            marginBottom: 8,
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <StickyNote className="w-3.5 h-3.5 text-amber-600" />
+            <span style={{ fontSize: 11, fontWeight: 600, color: "#44403c" }}>
+              {isEditingNote ? "Edit Note" : "Add Note"}
+            </span>
+          </div>
+
+          <textarea
+            ref={textareaRef}
+            id="note-edit-textarea"
+            value={draftNote}
+            onChange={(e) => setDraftNote(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Write your note here..."
+            rows={3}
+            style={{
+              width: "100%",
+              fontSize: 12,
+              lineHeight: 1.4,
+              color: "#1c1917",
+              backgroundColor: "white",
+              border: "1px solid #d6d3d1",
+              borderRadius: 6,
+              padding: "6px 8px",
+              outline: "none",
+              resize: "none",
+              boxSizing: "border-box",
+              fontFamily: "inherit",
+            }}
+          />
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <span style={{ fontSize: 9, color: "#a8a29e", display: "flex", alignItems: "center", gap: 2 }}>
+              <span>Ctrl+Enter</span>
+              <CornerDownLeft className="w-2.5 h-2.5" />
+            </span>
+            <div style={{ display: "flex", gap: 4 }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditingNote(false);
+                  setIsAddingNote(false);
+                  setDraftNote(highlight.note || "");
+                }}
+                style={{
+                  padding: "4px 8px",
+                  fontSize: 11,
+                  fontWeight: 500,
+                  color: "#57534e",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  borderRadius: 4,
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                id="note-save-edit-btn"
+                disabled={isSaving}
+                onClick={handleSaveNote}
+                style={{
+                  padding: "4px 10px",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: "white",
+                  backgroundColor: "#1c1917",
+                  border: "none",
+                  borderRadius: 4,
+                  cursor: "pointer",
+                }}
+              >
+                {isSaving ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Has no note yet: provide option to add note to this highlight */
+        <div style={{ marginBottom: 6 }}>
+          <button
+            type="button"
+            id="highlight-context-add-note-btn"
+            onClick={() => setIsAddingNote(true)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              width: "100%",
+              padding: "6px 8px",
+              fontSize: 12,
+              fontWeight: 500,
+              color: "#44403c",
+              backgroundColor: "#fafaf9",
+              border: "1px solid #e7e5e4",
+              borderRadius: 6,
+              cursor: "pointer",
+              transition: "background-color 0.1s",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.backgroundColor = "#f5f5f4";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.backgroundColor = "#fafaf9";
+            }}
+          >
+            <StickyNote className="w-3.5 h-3.5 text-amber-600" />
+            <span>Add Note to Highlight</span>
+          </button>
+        </div>
+      )}
+
+      {/* ─── Color section ────────────────────────────────────────── */}
       <div style={{ padding: "4px 8px 2px" }}>
         <p
           style={{
@@ -121,7 +442,7 @@ export function HighlightContextMenu({
             marginBottom: 6,
           }}
         >
-          Change color
+          {highlight.color ? "Change color" : "Add highlight color"}
         </p>
         <div style={{ display: "flex", gap: 6, marginBottom: 4 }}>
           {COLORS.map(({ color, label }) => {
@@ -151,8 +472,7 @@ export function HighlightContextMenu({
                   flexShrink: 0,
                 }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.transform =
-                    "scale(1.15)";
+                  (e.currentTarget as HTMLElement).style.transform = "scale(1.15)";
                 }}
                 onMouseLeave={(e) => {
                   (e.currentTarget as HTMLElement).style.transform = "scale(1)";
@@ -165,10 +485,10 @@ export function HighlightContextMenu({
 
       {/* Separator */}
       <div
-        style={{ height: 1, backgroundColor: "#f5f5f4", margin: "2px 0" }}
+        style={{ height: 1, backgroundColor: "#f5f5f4", margin: "4px 0" }}
       />
 
-      {/* Delete */}
+      {/* Delete entire highlight */}
       <button
         id="highlight-context-delete"
         role="menuitem"
@@ -182,7 +502,7 @@ export function HighlightContextMenu({
           gap: 8,
           width: "100%",
           padding: "6px 8px",
-          fontSize: 13,
+          fontSize: 12,
           color: "#ef4444",
           background: "none",
           border: "none",
@@ -198,23 +518,10 @@ export function HighlightContextMenu({
           (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
         }}
       >
-        <svg
-          width="13"
-          height="13"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <polyline points="3 6 5 6 21 6" />
-          <path d="M19 6l-1 14H6L5 6" />
-          <path d="M10 11v6M14 11v6" />
-          <path d="M9 6V4h6v2" />
-        </svg>
-        Remove highlight
+        <Trash2 className="w-3.5 h-3.5" />
+        <span>Remove Highlight &amp; Annotation</span>
       </button>
     </div>
   );
 }
+

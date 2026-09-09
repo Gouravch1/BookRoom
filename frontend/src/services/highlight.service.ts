@@ -49,4 +49,20 @@ export const highlightService = {
     );
     return res.data;
   },
+
+  /**
+   * Update or clear the note on an existing highlight.
+   * PATCH /api/highlights/{highlightId}/note
+   */
+  async updateHighlightNote(
+    highlightId: number,
+    note: string | null
+  ): Promise<Highlight> {
+    const res = await apiClient.patch<Highlight>(
+      `/api/highlights/${highlightId}/note`,
+      { note }
+    );
+    return res.data;
+  },
 };
+

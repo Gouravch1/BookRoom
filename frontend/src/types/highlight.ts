@@ -19,7 +19,8 @@ export interface Highlight {
   bookId: number;
   pageNumber: number;
   selectedText: string | null;
-  color: HighlightColor;
+  color: HighlightColor | null;
+  note?: string | null;
   rectangles: HighlightRectangle[];
   createdAt: string;
   updatedAt: string;
@@ -29,6 +30,8 @@ export interface CreateHighlightRequest {
   bookId: number;
   pageNumber: number;
   selectedText: string;
-  color: HighlightColor;
+  color?: HighlightColor | null;
+  note?: string | null;
   rectangles: HighlightRectangle[];
 }
+

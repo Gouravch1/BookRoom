@@ -21,6 +21,13 @@ interface PdfReaderProps {
   bookId: number;
   currentPage: number;
   scale: number;
+  focusedHighlightId?: number | null;
+  onClearFocusedHighlight?: () => void;
+  highlights?: Highlight[];
+  addHighlight?: (request: import("@/types/highlight").CreateHighlightRequest) => Promise<Highlight | null>;
+  removeHighlight?: (highlightId: number) => Promise<void>;
+  changeColor?: (highlightId: number, color: HighlightColor) => Promise<void>;
+  updateNote?: (highlightId: number, note: string | null) => Promise<Highlight | null>;
   onPageCountLoaded: (total: number) => void;
   onLoadError: (error: Error) => void;
 }
@@ -30,21 +37,37 @@ export function PdfReader({
   bookId,
   currentPage,
   scale,
+  focusedHighlightId,
+  onClearFocusedHighlight,
+  highlights: propHighlights,
+  addHighlight: propAddHighlight,
+  removeHighlight: propRemoveHighlight,
+  changeColor: propChangeColor,
+  updateNote: propUpdateNote,
   onPageCountLoaded,
   onLoadError,
 }: PdfReaderProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState<number>(0);
 
-  // ─── Highlights ──────────────────────────────────────────────────────────────
-  const { highlights, addHighlight, removeHighlight, changeColor } =
-    usePdfHighlights(bookId);
+  // ─── Highlights Hook (fallback if not passed from parent) ───────────────────
+  const internalHighlights = usePdfHighlights(bookId);
+  const highlights = propHighlights ?? internalHighlights.highlights;
+  const addHighlight = propAddHighlight ?? internalHighlights.addHighlight;
+  const removeHighlight = propRemoveHighlight ?? internalHighlights.removeHighlight;
+  const changeColor = propChangeColor ?? internalHighlights.changeColor;
+  const updateNote = propUpdateNote ?? internalHighlights.updateNote;
 
-  // ─── Context menu state (for existing highlights) ────────────────────────────
+  // ─── Context menu state (for existing highlights & notes) ───────────────────
   const [contextMenu, setContextMenu] = useState<{
-    highlight: Highlight;
+    highlightId: number;
     position: { x: number; y: number };
   } | null>(null);
+
+  // Keep active highlight synced with state
+  const activeHighlight = contextMenu
+    ? highlights.find((h) => h.id === contextMenu.highlightId) || null
+    : null;
 
   // ─── Text selection & new highlight toolbar ──────────────────────────────────
   const [selection, setSelection] = useState<SelectionState | null>(null);
@@ -79,22 +102,52 @@ export function PdfReader({
         pageNumber: selectedPage,
         selectedText,
         color,
+        note: null,
         rectangles: selectionRects,
       });
     },
     [selection, addHighlight, bookId, clearSelection]
   );
 
-  // ─── Handle click on existing highlight ─────────────────────────────────────
+
+  // ─── Handle click on existing highlight / note marker ─────────────────────────
   const handleHighlightClick = useCallback(
     (highlight: Highlight, position: { x: number; y: number }) => {
       // Close the new-highlight toolbar first
       setSelection(null);
       clearSelection();
-      setContextMenu({ highlight, position });
+      setContextMenu({ highlightId: highlight.id, position });
     },
     [clearSelection]
   );
+
+  // ─── Focus & scroll to highlight when selected from NotesPanel ───────────────
+  useEffect(() => {
+    if (!focusedHighlightId) return;
+    const target = highlights.find((h) => h.id === focusedHighlightId);
+    if (!target || target.pageNumber !== currentPage) return;
+
+    const timer = setTimeout(() => {
+      const anchor =
+        document.getElementById(`highlight-anchor-${focusedHighlightId}`) ||
+        document.getElementById(`highlight-note-marker-${focusedHighlightId}`) ||
+        document.getElementById(`highlight-group-${focusedHighlightId}`);
+
+      if (anchor) {
+        anchor.scrollIntoView({ behavior: "smooth", block: "center" });
+        const rect = anchor.getBoundingClientRect();
+        setContextMenu({
+          highlightId: target.id,
+          position: {
+            x: Math.max(160, Math.min(window.innerWidth - 160, rect.left + rect.width / 2)),
+            y: rect.top,
+          },
+        });
+      }
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [focusedHighlightId, highlights, currentPage]);
 
   // ─── Click detection on highlighted text through the text layer ───────────────
   useEffect(() => {
@@ -154,7 +207,7 @@ export function PdfReader({
         setSelection(null);
         clearSelection();
         setContextMenu({
-          highlight: matched,
+          highlightId: matched.id,
           position: { x: e.clientX, y: e.clientY },
         });
       }
@@ -216,6 +269,7 @@ export function PdfReader({
             pageNumber={currentPage}
             width={pageWidth}
             highlights={highlights}
+            focusedHighlightId={focusedHighlightId}
             onHighlightClick={handleHighlightClick}
           />
         </Document>
@@ -233,16 +287,25 @@ export function PdfReader({
         />
       )}
 
-      {/* Context menu — appears when user clicks an existing highlight */}
-      {contextMenu && (
+
+      {/* Context menu / Note Popover — appears when user clicks highlight or note marker */}
+      {activeHighlight && contextMenu && (
         <HighlightContextMenu
-          highlight={contextMenu.highlight}
+          highlight={activeHighlight}
           position={contextMenu.position}
-          onDelete={removeHighlight}
+          onDelete={(id) => {
+            removeHighlight(id);
+            setContextMenu(null);
+          }}
           onChangeColor={changeColor}
-          onClose={() => setContextMenu(null)}
+          onUpdateNote={updateNote}
+          onClose={() => {
+            setContextMenu(null);
+            if (onClearFocusedHighlight) onClearFocusedHighlight();
+          }}
         />
       )}
     </>
   );
 }
+
