@@ -62,6 +62,9 @@ public class Highlight {
     @Column(nullable = false, length = 20)
     private HighlightColor color;
 
+    @Column(name = "note", columnDefinition = "TEXT")
+    private String note;
+
     @OneToMany(
             mappedBy = "highlight",
             cascade = CascadeType.ALL,

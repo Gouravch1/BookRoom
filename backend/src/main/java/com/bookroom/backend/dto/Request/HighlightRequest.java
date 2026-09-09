@@ -20,5 +20,7 @@ public class HighlightRequest {
 
     private HighlightColor color;
 
+    private String note;
+
     private List<HighlightRectangleRequest> rectangles;
 }

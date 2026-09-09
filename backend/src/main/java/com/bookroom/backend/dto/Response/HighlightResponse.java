@@ -21,6 +21,8 @@ public class HighlightResponse {
 
     private HighlightColor color;
 
+    private String note;
+
     private List<HighlightRectangleResponse> rectangles;
 
     private LocalDateTime createdAt;

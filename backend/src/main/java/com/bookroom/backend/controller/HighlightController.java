@@ -1,6 +1,7 @@
 package com.bookroom.backend.controller;
 
 import com.bookroom.backend.dto.Request.HighlightRequest;
+import com.bookroom.backend.dto.Request.NoteUpdateRequest;
 import com.bookroom.backend.dto.Response.HighlightResponse;
 import com.bookroom.backend.entity.HighlightColor;
 import com.bookroom.backend.service.HighlightService;
@@ -76,6 +77,21 @@ public class HighlightController {
                 highlightService.updateColor(
                         highlightId,
                         color,
+                        authentication.getName()
+                )
+        );
+    }
+
+    @PatchMapping("/{highlightId}/note")
+    public ResponseEntity<HighlightResponse> updateNote(
+            @PathVariable Long highlightId,
+            @RequestBody NoteUpdateRequest request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                highlightService.updateNote(
+                        highlightId,
+                        request.getNote(),
                         authentication.getName()
                 )
         );

@@ -7,6 +7,7 @@ import com.bookroom.backend.dto.Response.HighlightResponse;
 import com.bookroom.backend.entity.Book;
 import com.bookroom.backend.entity.Highlight;
 import com.bookroom.backend.entity.HighlightRectangle;
+import com.bookroom.backend.entity.HighlightColor;
 import com.bookroom.backend.entity.User;
 import com.bookroom.backend.repository.BookRepository;
 import com.bookroom.backend.repository.HighlightRepository;
@@ -52,6 +53,7 @@ public class HighlightService {
                         new RuntimeException("Book not found")
                 );
 
+        // User must have read access to this book.
         bookAccessService.requireReadAccess(
                 book,
                 email
@@ -64,19 +66,22 @@ public class HighlightService {
         highlight.setPageNumber(request.getPageNumber());
         highlight.setSelectedText(request.getSelectedText());
         highlight.setColor(request.getColor());
+        highlight.setNote(request.getNote());
 
-        for (HighlightRectangleRequest rectangleRequest :
-                request.getRectangles()) {
+        if (request.getRectangles() != null) {
+            for (HighlightRectangleRequest rectangleRequest :
+                    request.getRectangles()) {
 
-            HighlightRectangle rectangle =
-                    new HighlightRectangle(
-                            rectangleRequest.getX(),
-                            rectangleRequest.getY(),
-                            rectangleRequest.getWidth(),
-                            rectangleRequest.getHeight()
-                    );
+                HighlightRectangle rectangle =
+                        new HighlightRectangle(
+                                rectangleRequest.getX(),
+                                rectangleRequest.getY(),
+                                rectangleRequest.getWidth(),
+                                rectangleRequest.getHeight()
+                        );
 
-            highlight.addRectangle(rectangle);
+                highlight.addRectangle(rectangle);
+            }
         }
 
         Highlight saved =
@@ -145,7 +150,7 @@ public class HighlightService {
     @Transactional
     public HighlightResponse updateColor(
             Long highlightId,
-            com.bookroom.backend.entity.HighlightColor color,
+            HighlightColor color,
             String email
     ) {
 
@@ -167,6 +172,37 @@ public class HighlightService {
                         );
 
         highlight.setColor(color);
+
+        return mapToResponse(
+                highlightRepository.save(highlight)
+        );
+    }
+
+    @Transactional
+    public HighlightResponse updateNote(
+            Long highlightId,
+            String note,
+            String email
+    ) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found")
+                );
+
+        Highlight highlight =
+                highlightRepository
+                        .findByIdAndUser(
+                                highlightId,
+                                user
+                        )
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Highlight not found"
+                                )
+                        );
+
+        highlight.setNote(note);
 
         return mapToResponse(
                 highlightRepository.save(highlight)
@@ -196,6 +232,7 @@ public class HighlightService {
                 highlight.getPageNumber(),
                 highlight.getSelectedText(),
                 highlight.getColor(),
+                highlight.getNote(),
                 rectangles,
                 highlight.getCreatedAt(),
                 highlight.getUpdatedAt()
