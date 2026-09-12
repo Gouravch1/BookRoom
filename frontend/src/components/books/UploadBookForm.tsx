@@ -7,10 +7,7 @@ import { bookService } from "@/services/book.service";
 import { libraryService } from "@/services/library.service";
 import { getApiErrorMessage } from "@/lib/api-client";
 import { PdfDropzone } from "@/components/books/PdfDropzone";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, CheckCircle, Loader2, AlertCircle } from "lucide-react";
 
 export function UploadBookForm() {
   const router = useRouter();
@@ -31,7 +28,6 @@ export function UploadBookForm() {
     setIsLoading(true);
     setUploadProgress(0);
 
-    // Simulate progress for UX
     const progressInterval = setInterval(() => {
       setUploadProgress((p) => Math.min(p + 10, 85));
     }, 300);
@@ -43,7 +39,6 @@ export function UploadBookForm() {
         author: author.trim() || undefined,
       });
 
-      // Add to own library automatically
       try {
         await libraryService.addToLibrary(uploaded.id);
       } catch {
@@ -65,14 +60,38 @@ export function UploadBookForm() {
     }
   }
 
+  const inputStyle = {
+    background: "var(--bg-base)",
+    border: "1px solid var(--border-default)",
+    borderRadius: "var(--radius-md)",
+    color: "var(--text-primary)",
+    height: "44px",
+    padding: "0 16px",
+    fontSize: "14px",
+    width: "100%",
+  };
+
   if (success) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-        <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center">
-          <CheckCircle className="w-7 h-7 text-green-600" />
+      <div className="flex flex-col items-center justify-center py-16 text-center gap-4 animate-scale-in">
+        <div
+          className="w-16 h-16 rounded-2xl flex items-center justify-center"
+          style={{
+            background: "var(--emerald-dim)",
+            border: "1px solid rgba(52,211,153,0.3)",
+            boxShadow: "0 0 30px rgba(52,211,153,0.15)",
+          }}
+        >
+          <CheckCircle className="w-8 h-8" style={{ color: "var(--emerald)" }} />
         </div>
-        <h2 className="text-lg font-semibold text-stone-900">Book uploaded!</h2>
-        <p className="text-sm text-stone-500">Redirecting to your library…</p>
+        <div>
+          <h2 className="font-serif text-2xl mb-1" style={{ color: "var(--text-primary)" }}>
+            Book uploaded!
+          </h2>
+          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+            Redirecting to your library…
+          </p>
+        </div>
       </div>
     );
   }
@@ -81,7 +100,9 @@ export function UploadBookForm() {
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       {/* File */}
       <div className="flex flex-col gap-2">
-        <Label>PDF File</Label>
+        <label className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+          PDF File
+        </label>
         <PdfDropzone
           selectedFile={file}
           onFileSelected={setFile}
@@ -90,38 +111,61 @@ export function UploadBookForm() {
       </div>
 
       {/* Title */}
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="book-title">Title <span className="text-red-500">*</span></Label>
-        <Input
+      <div className="flex flex-col gap-2">
+        <label
+          htmlFor="book-title"
+          className="text-sm font-medium"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          Title <span style={{ color: "var(--accent)" }}>*</span>
+        </label>
+        <input
           id="book-title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Enter book title"
           required
+          style={inputStyle}
         />
       </div>
 
       {/* Author */}
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="book-author">Author</Label>
-        <Input
+      <div className="flex flex-col gap-2">
+        <label
+          htmlFor="book-author"
+          className="text-sm font-medium"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          Author{" "}
+          <span className="text-xs font-normal" style={{ color: "var(--text-muted)" }}>
+            (optional)
+          </span>
+        </label>
+        <input
           id="book-author"
           value={author}
           onChange={(e) => setAuthor(e.target.value)}
-          placeholder="Optional"
+          placeholder="e.g. George Orwell"
+          style={inputStyle}
         />
       </div>
 
-      {/* Upload progress */}
+      {/* Progress */}
       {isLoading && (
-        <div className="flex flex-col gap-1.5">
-          <div className="h-1.5 w-full rounded-full bg-stone-100 overflow-hidden">
+        <div className="flex flex-col gap-2 animate-fade-in">
+          <div
+            className="h-1.5 w-full rounded-full overflow-hidden"
+            style={{ background: "var(--bg-hover)" }}
+          >
             <div
-              className="h-full bg-stone-700 rounded-full transition-all duration-300"
-              style={{ width: `${uploadProgress}%` }}
+              className="h-full rounded-full transition-all duration-300"
+              style={{
+                width: `${uploadProgress}%`,
+                background: "linear-gradient(90deg, var(--accent-hover), var(--accent))",
+              }}
             />
           </div>
-          <p className="text-xs text-stone-500 text-center">
+          <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
             Uploading… {uploadProgress}%
           </p>
         </div>
@@ -129,23 +173,48 @@ export function UploadBookForm() {
 
       {/* Error */}
       {error && (
-        <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+        <div
+          className="flex items-start gap-2.5 rounded-xl px-4 py-3 text-sm animate-scale-in"
+          style={{
+            background: "var(--red-dim)",
+            border: "1px solid rgba(248,113,113,0.2)",
+            color: "var(--red)",
+          }}
+        >
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
           {error}
         </div>
       )}
 
-      <div className="flex gap-2">
+      {/* Buttons */}
+      <div className="flex gap-3 pt-1">
         <Link href="/library" className="flex-1">
-          <Button type="button" variant="outline" className="w-full">
-            <ArrowLeft className="w-4 h-4" />
-            Cancel
-          </Button>
+          <button
+            type="button"
+            className="w-full h-11 rounded-xl text-sm font-medium transition-all duration-200"
+            style={{
+              background: "var(--bg-raised)",
+              border: "1px solid var(--border-default)",
+              color: "var(--text-secondary)",
+            }}
+          >
+            <span className="flex items-center justify-center gap-1.5">
+              <ArrowLeft className="w-4 h-4" />
+              Cancel
+            </span>
+          </button>
         </Link>
-        <Button
+        <button
           type="submit"
           disabled={isLoading || !file}
-          className="flex-1"
           id="upload-submit"
+          className="flex-1 h-11 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2"
+          style={{
+            background: isLoading || !file ? "var(--bg-hover)" : "var(--accent)",
+            color: isLoading || !file ? "var(--text-muted)" : "#0e0e0f",
+            cursor: isLoading || !file ? "not-allowed" : "pointer",
+            boxShadow: isLoading || !file ? "none" : "0 4px 16px var(--accent-glow)",
+          }}
         >
           {isLoading ? (
             <>
@@ -155,7 +224,7 @@ export function UploadBookForm() {
           ) : (
             "Upload Book"
           )}
-        </Button>
+        </button>
       </div>
     </form>
   );

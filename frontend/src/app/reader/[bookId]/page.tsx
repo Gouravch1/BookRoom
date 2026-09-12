@@ -22,8 +22,8 @@ const PdfReader = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex h-full items-center justify-center" style={{ background: "var(--bg-base)" }}>
+        <Loader2 className="h-8 w-8 animate-spin" style={{ color: "var(--accent)" }} />
       </div>
     ),
   }
@@ -131,21 +131,21 @@ export default function ReaderPage({ params, searchParams }: ReaderPageProps) {
     setActivePanel((curr) => (curr === panel ? null : panel));
   }, []);
 
+  const totalPages = Math.max(book?.totalPages ?? 0, pdfTotalPages);
+
   const handleFinishBook = useCallback(async () => {
-    await completeBook();
+    await completeBook(totalPages);
     toast.success("🎉 Congratulations! Book finished.", {
       description: "You've completed reading this book (100%).",
       duration: 4000,
     });
-  }, [completeBook]);
-
-  const totalPages = book?.totalPages ?? pdfTotalPages;
+  }, [completeBook, totalPages]);
 
   // Loading — auth check
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-stone-100 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-stone-300" />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg-base)" }}>
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--accent)" }} />
       </div>
     );
   }
@@ -155,12 +155,15 @@ export default function ReaderPage({ params, searchParams }: ReaderPageProps) {
   // Loading — reader data
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-stone-100 flex flex-col items-center justify-center gap-3 text-stone-500">
-        <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-2">
-          <BookOpen className="w-6 h-6 text-stone-400" />
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3" style={{ background: "var(--bg-base)" }}>
+        <div
+          className="w-12 h-12 rounded-2xl flex items-center justify-center mb-2"
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border-default)" }}
+        >
+          <BookOpen className="w-6 h-6" style={{ color: "var(--accent)" }} />
         </div>
-        <Loader2 className="w-5 h-5 animate-spin" />
-        <p className="text-sm">Opening your reading room…</p>
+        <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--text-muted)" }} />
+        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Opening your reading room…</p>
       </div>
     );
   }
@@ -168,19 +171,22 @@ export default function ReaderPage({ params, searchParams }: ReaderPageProps) {
   // Error states
   if (error) {
     return (
-      <div className="min-h-screen bg-stone-100 flex flex-col items-center justify-center gap-4 p-6 text-center">
-        <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center">
-          <BookOpen className="w-6 h-6 text-stone-300" />
+      <div className="min-h-screen flex flex-col items-center justify-center gap-5 p-6 text-center" style={{ background: "var(--bg-base)" }}>
+        <div
+          className="w-14 h-14 rounded-2xl flex items-center justify-center"
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border-default)" }}
+        >
+          <BookOpen className="w-7 h-7" style={{ color: "var(--text-muted)" }} />
         </div>
         <div>
-          <h2 className="text-lg font-semibold text-stone-800 mb-1">
+          <h2 className="text-lg font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
             {errorStatus === 403
               ? "Access denied"
               : errorStatus === 404
               ? "Book not found"
               : "Unable to open this book"}
           </h2>
-          <p className="text-sm text-stone-500 max-w-xs">
+          <p className="text-sm max-w-xs" style={{ color: "var(--text-secondary)" }}>
             {errorStatus === 403
               ? "You don't have permission to read this book."
               : errorStatus === 404
@@ -189,10 +195,13 @@ export default function ReaderPage({ params, searchParams }: ReaderPageProps) {
           </p>
         </div>
         <Link href="/library">
-          <Button variant="outline">
+          <button
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200"
+            style={{ background: "var(--bg-raised)", border: "1px solid var(--border-default)", color: "var(--text-secondary)" }}
+          >
             <ArrowLeft className="w-4 h-4" />
             Back to Library
-          </Button>
+          </button>
         </Link>
       </div>
     );
@@ -203,12 +212,20 @@ export default function ReaderPage({ params, searchParams }: ReaderPageProps) {
   return (
     <div
       id="reader-fullscreen-target"
-      className="h-screen flex flex-col bg-stone-100 overflow-hidden"
+      className="h-screen h-[100dvh] min-h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden"
+      style={{ background: "var(--bg-base)" }}
     >
       <SonnerToaster richColors position="top-right" />
 
       {/* Header */}
-      <ReaderHeader book={book} progress={progress} currentPage={currentPage} />
+      <ReaderHeader
+        book={book}
+        progress={progress}
+        currentPage={currentPage}
+        highlightsCount={highlights.length}
+        activePanel={activePanel}
+        onTogglePanel={handleTogglePanel}
+      />
 
       {/* Body: PDF + Notes panel + sidebar tools */}
       <div className="flex-1 flex min-h-0 relative overflow-hidden">
@@ -256,8 +273,8 @@ export default function ReaderPage({ params, searchParams }: ReaderPageProps) {
         currentPage={currentPage}
         totalPages={totalPages}
         scale={scale}
-        onPrev={() => navigatePage(currentPage - 1)}
-        onNext={() => navigatePage(currentPage + 1)}
+        onPrev={() => navigatePage(currentPage - 1, totalPages)}
+        onNext={() => navigatePage(currentPage + 1, totalPages)}
         onFinish={handleFinishBook}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}

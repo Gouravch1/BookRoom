@@ -102,9 +102,9 @@ export function useReader(bookId: number) {
   );
 
   const navigatePage = useCallback(
-    (page: number) => {
+    (page: number, maxPagesOverride?: number) => {
       if (!book) return;
-      const total = book.totalPages ?? 9999;
+      const total = Math.max(book.totalPages ?? 0, maxPagesOverride ?? 0) || 9999;
       const clamped = Math.max(1, Math.min(page, total));
       setCurrentPage(clamped);
 
@@ -125,9 +125,9 @@ export function useReader(bookId: number) {
     [book, bookId]
   );
 
-  const completeBook = useCallback(async () => {
+  const completeBook = useCallback(async (maxPagesOverride?: number) => {
     if (!book) return null;
-    const total = book.totalPages ?? currentPage;
+    const total = Math.max(book.totalPages ?? 0, maxPagesOverride ?? 0) || currentPage;
     return await saveProgressImmediate(total);
   }, [book, currentPage, saveProgressImmediate]);
 

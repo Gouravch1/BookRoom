@@ -13,6 +13,7 @@ interface PdfPageProps {
   focusedHighlightId?: number | null;
   onHighlightClick: (highlight: Highlight, position: { x: number; y: number }) => void;
   onHighlightColorChange?: (highlightId: number, color: HighlightColor) => void;
+  activeSelectionRects?: import("@/types/highlight").HighlightRectangle[];
 }
 
 /**
@@ -27,6 +28,7 @@ export function PdfPage({
   highlights,
   focusedHighlightId,
   onHighlightClick,
+  activeSelectionRects,
 }: PdfPageProps) {
   const pageRef = useRef<HTMLDivElement>(null);
 
@@ -62,6 +64,7 @@ export function PdfPage({
         pageNumber={pageNumber}
         focusedHighlightId={focusedHighlightId}
         onHighlightClick={onHighlightClick}
+        activeSelectionRects={activeSelectionRects}
       />
     </div>
   );

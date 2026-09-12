@@ -2,7 +2,6 @@
 
 import { useCallback, useRef, useState } from "react";
 import { UploadCloud, FileText, X } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface PdfDropzoneProps {
   onFileSelected: (file: File) => void;
@@ -51,18 +50,32 @@ export function PdfDropzone({ onFileSelected, selectedFile, onClear }: PdfDropzo
   return (
     <div>
       {selectedFile ? (
-        <div className="flex items-center gap-3 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
-          <div className="w-10 h-10 rounded-lg bg-stone-200 flex items-center justify-center shrink-0">
-            <FileText className="w-5 h-5 text-stone-600" />
+        <div
+          className="flex items-center gap-3 rounded-xl px-4 py-3 animate-scale-in"
+          style={{
+            background: "var(--accent-dim)",
+            border: "1px solid rgba(232,160,69,0.25)",
+          }}
+        >
+          <div
+            className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+            style={{ background: "rgba(232,160,69,0.15)" }}
+          >
+            <FileText className="w-5 h-5" style={{ color: "var(--accent)" }} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-stone-900 truncate">{selectedFile.name}</p>
-            <p className="text-xs text-stone-500">{sizeMB} MB · PDF</p>
+            <p className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>
+              {selectedFile.name}
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+              {sizeMB} MB · PDF
+            </p>
           </div>
           <button
             type="button"
             onClick={onClear}
-            className="text-stone-400 hover:text-stone-700 transition-colors p-1"
+            className="p-1.5 rounded-lg transition-all duration-200"
+            style={{ color: "var(--text-muted)" }}
             aria-label="Remove file"
           >
             <X className="w-4 h-4" />
@@ -74,22 +87,32 @@ export function PdfDropzone({ onFileSelected, selectedFile, onClear }: PdfDropzo
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
           onClick={() => inputRef.current?.click()}
-          className={cn(
-            "relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed cursor-pointer transition-all duration-200 py-10 px-6",
-            isDragging
-              ? "border-stone-500 bg-stone-50"
-              : "border-stone-200 hover:border-stone-400 hover:bg-stone-50"
-          )}
+          className="relative flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed cursor-pointer transition-all duration-200 py-12 px-6"
+          style={{
+            borderColor: isDragging ? "var(--accent)" : "var(--border-default)",
+            background: isDragging ? "var(--accent-dim)" : "var(--bg-raised)",
+          }}
         >
-          <div className="w-12 h-12 rounded-xl bg-stone-100 flex items-center justify-center">
-            <UploadCloud className="w-6 h-6 text-stone-400" />
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-200"
+            style={{
+              background: isDragging ? "rgba(232,160,69,0.15)" : "var(--bg-hover)",
+              border: `1px solid ${isDragging ? "rgba(232,160,69,0.3)" : "var(--border-default)"}`,
+            }}
+          >
+            <UploadCloud
+              className="w-7 h-7 transition-colors duration-200"
+              style={{ color: isDragging ? "var(--accent)" : "var(--text-muted)" }}
+            />
           </div>
           <div className="text-center">
-            <p className="text-sm font-medium text-stone-700">
+            <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
               Drop your PDF here, or{" "}
-              <span className="text-stone-900 underline underline-offset-2">browse</span>
+              <span style={{ color: "var(--accent)" }}>browse</span>
             </p>
-            <p className="text-xs text-stone-400 mt-1">PDF files up to 100 MB</p>
+            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+              PDF files up to 100 MB
+            </p>
           </div>
           <input
             ref={inputRef}
@@ -102,7 +125,9 @@ export function PdfDropzone({ onFileSelected, selectedFile, onClear }: PdfDropzo
         </div>
       )}
       {dragError && (
-        <p className="text-xs text-red-600 mt-1.5">{dragError}</p>
+        <p className="text-xs mt-2" style={{ color: "var(--red)" }}>
+          {dragError}
+        </p>
       )}
     </div>
   );

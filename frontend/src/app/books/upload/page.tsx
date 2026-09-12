@@ -19,8 +19,14 @@ export default function UploadPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-stone-300 border-t-stone-700 rounded-full animate-spin" />
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "var(--bg-base)" }}
+      >
+        <div
+          className="w-7 h-7 border-2 rounded-full animate-spin"
+          style={{ borderColor: "var(--border-strong)", borderTopColor: "var(--accent)" }}
+        />
       </div>
     );
   }
@@ -28,19 +34,28 @@ export default function UploadPage() {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col">
-      {/* Minimal header */}
-      <header className="border-b border-stone-200 bg-white/95 backdrop-blur-sm sticky top-0 z-10">
+    <div className="min-h-screen flex flex-col" style={{ background: "var(--bg-base)" }}>
+      {/* Header */}
+      <header
+        className="glass sticky top-0 z-10"
+        style={{ borderBottom: "1px solid var(--border-subtle)" }}
+      >
         <div className="max-w-2xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-stone-900 rounded-md flex items-center justify-center">
-              <BookOpen className="w-3.5 h-3.5 text-white" />
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ background: "var(--accent)", boxShadow: "0 3px 10px var(--accent-glow)" }}
+            >
+              <BookOpen className="w-4 h-4" style={{ color: "#0e0e0f" }} />
             </div>
-            <span className="font-semibold text-stone-900 tracking-tight">BookRoom</span>
+            <span className="font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
+              BookRoom
+            </span>
           </div>
           <Link
             href="/library"
-            className="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-900 transition-colors"
+            className="flex items-center gap-1.5 text-sm font-medium transition-colors"
+            style={{ color: "var(--text-secondary)" }}
           >
             <ArrowLeft className="w-4 h-4" />
             Library
@@ -49,17 +64,26 @@ export default function UploadPage() {
       </header>
 
       <main className="flex-1 max-w-2xl mx-auto w-full px-4 sm:px-6 py-10">
-        <div className="mb-7">
-          <h1 className="text-2xl font-semibold text-stone-900 mb-1">
+        <div className="mb-8 animate-fade-up">
+          <h1
+            className="font-serif text-3xl sm:text-4xl mb-2"
+            style={{ color: "var(--text-primary)" }}
+          >
             Upload a book
           </h1>
-          <p className="text-sm text-stone-500">
-            Upload a PDF to your private library. Only you will be able to read
-            it.
+          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+            Upload a PDF to your private library. Only you will be able to read it.
           </p>
         </div>
 
-        <div className="bg-white rounded-xl border border-stone-200 p-6 shadow-sm">
+        <div
+          className="rounded-2xl p-6 sm:p-8 animate-fade-up"
+          style={{
+            background: "var(--bg-card)",
+            border: "1px solid var(--border-subtle)",
+            animationDelay: "60ms",
+          }}
+        >
           <UploadBookForm />
         </div>
       </main>

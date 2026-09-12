@@ -87,9 +87,9 @@ export function PdfReader({
     onClear: handleClearSelection,
   });
 
-  // ─── Handle highlight color chosen from toolbar ───────────────────────────────
+  // ─── Handle highlight color (and optional note) chosen from toolbar ───────────
   const handleColorSelect = useCallback(
-    async (color: HighlightColor) => {
+    async (color: HighlightColor, note?: string | null) => {
       if (!selection) return;
       const { selectedText, selectionRects, selectedPage } = selection;
 
@@ -102,7 +102,7 @@ export function PdfReader({
         pageNumber: selectedPage,
         selectedText,
         color,
-        note: null,
+        note: note?.trim() || null,
         rectangles: selectionRects,
       });
     },
@@ -149,13 +149,94 @@ export function PdfReader({
     return () => clearTimeout(timer);
   }, [focusedHighlightId, highlights, currentPage]);
 
-  // ─── Click detection on highlighted text through the text layer ───────────────
+  // ─── Click & Touch detection on highlighted text through the text layer ───────
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
+    let touchStart: { x: number; y: number; time: number } | null = null;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        touchStart = {
+          x: e.touches[0].clientX,
+          y: e.touches[0].clientY,
+          time: Date.now(),
+        };
+      }
+    };
+
+    const checkPointHit = (clientX: number, clientY: number, targetNode: Node | null) => {
+      let pageEl: HTMLElement | null = null;
+      let pageNumber: number | null = null;
+      let curr = targetNode;
+
+      while (curr && curr !== container) {
+        if (curr instanceof HTMLElement) {
+          const attr = curr.getAttribute("data-page-number");
+          if (attr !== null) {
+            const parsed = parseInt(attr, 10);
+            if (!isNaN(parsed)) {
+              pageEl = curr;
+              pageNumber = parsed;
+              break;
+            }
+          }
+        }
+        curr = curr.parentNode;
+      }
+
+      if (!pageEl || pageNumber === null) return false;
+
+      const pageRect = pageEl.getBoundingClientRect();
+      const clickX = (clientX - pageRect.left) / pageRect.width;
+      const clickY = (clientY - pageRect.top) / pageRect.height;
+
+      // Touch tolerance padding (~14px vertically, ~8px horizontally)
+      const tolY = 14 / pageRect.height;
+      const tolX = 8 / pageRect.width;
+
+      const matched = highlights.find(
+        (h) =>
+          h.pageNumber === pageNumber &&
+          h.rectangles.some(
+            (r) =>
+              clickX >= r.x - tolX &&
+              clickX <= r.x + r.width + tolX &&
+              clickY >= r.y - tolY &&
+              clickY <= r.y + r.height + tolY
+          )
+      );
+
+      if (matched) {
+        setSelection(null);
+        clearSelection();
+        setContextMenu({
+          highlightId: matched.id,
+          position: { x: clientX, y: clientY },
+        });
+        return true;
+      }
+      return false;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (!touchStart || e.changedTouches.length === 0) return;
+      const touch = e.changedTouches[0];
+      const dx = touch.clientX - touchStart.x;
+      const dy = touch.clientY - touchStart.y;
+      const duration = Date.now() - touchStart.time;
+      touchStart = null;
+
+      // Only treat as tap if finger didn't drag/scroll
+      if (Math.hypot(dx, dy) < 10 && duration < 400) {
+        setTimeout(() => {
+          checkPointHit(touch.clientX, touch.clientY, e.target as Node);
+        }, 30);
+      }
+    };
+
     const handleClick = (e: MouseEvent) => {
-      // If user made an active text selection, do not trigger highlight click
       const currentSelection = window.getSelection();
       if (
         currentSelection &&
@@ -165,56 +246,16 @@ export function PdfReader({
         return;
       }
 
-      let targetNode: Node | null = e.target as Node;
-      let pageEl: HTMLElement | null = null;
-      let pageNumber: number | null = null;
-
-      while (targetNode && targetNode !== container) {
-        if (targetNode instanceof HTMLElement) {
-          const attr = targetNode.getAttribute("data-page-number");
-          if (attr !== null) {
-            const parsed = parseInt(attr, 10);
-            if (!isNaN(parsed)) {
-              pageEl = targetNode;
-              pageNumber = parsed;
-              break;
-            }
-          }
-        }
-        targetNode = targetNode.parentNode;
-      }
-
-      if (!pageEl || pageNumber === null) return;
-
-      const pageRect = pageEl.getBoundingClientRect();
-      const clickX = (e.clientX - pageRect.left) / pageRect.width;
-      const clickY = (e.clientY - pageRect.top) / pageRect.height;
-
-      // Check if click coordinates fall within any highlight rect on this page
-      const matched = highlights.find(
-        (h) =>
-          h.pageNumber === pageNumber &&
-          h.rectangles.some(
-            (r) =>
-              clickX >= r.x &&
-              clickX <= r.x + r.width &&
-              clickY >= r.y &&
-              clickY <= r.y + r.height
-          )
-      );
-
-      if (matched) {
-        setSelection(null);
-        clearSelection();
-        setContextMenu({
-          highlightId: matched.id,
-          position: { x: e.clientX, y: e.clientY },
-        });
-      }
+      checkPointHit(e.clientX, e.clientY, e.target as Node);
     };
 
+    container.addEventListener("touchstart", handleTouchStart, { passive: true });
+    container.addEventListener("touchend", handleTouchEnd);
     container.addEventListener("click", handleClick);
+
     return () => {
+      container.removeEventListener("touchstart", handleTouchStart);
+      container.removeEventListener("touchend", handleTouchEnd);
       container.removeEventListener("click", handleClick);
     };
   }, [highlights, clearSelection]);
@@ -233,6 +274,76 @@ export function PdfReader({
     return () => observer.disconnect();
   }, [updateWidth]);
 
+  // ─── Disable Native Context Menu, Copy, Cut, Drag & Shortcuts ───────────────
+  useEffect(() => {
+    const isEditingInput = () => {
+      const el = document.activeElement;
+      return Boolean(
+        el &&
+          (el.tagName === "INPUT" ||
+            el.tagName === "TEXTAREA" ||
+            el.getAttribute("contenteditable") === "true")
+      );
+    };
+
+    const handleCopy = (e: ClipboardEvent) => {
+      if (isEditingInput()) return;
+      e.preventDefault();
+      if (e.clipboardData) e.clipboardData.clearData();
+    };
+
+    const handleCut = (e: ClipboardEvent) => {
+      if (isEditingInput()) return;
+      e.preventDefault();
+    };
+
+    const handleDragStart = (e: DragEvent) => {
+      if (isEditingInput()) return;
+      e.preventDefault();
+    };
+
+    const handleContextMenu = (e: MouseEvent) => {
+      if (isEditingInput()) return;
+      // Completely suppress the browser's right-click context menu (which has "Copy")
+      e.preventDefault();
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isEditingInput()) return;
+
+      // Prevent Ctrl+C, Cmd+C, Ctrl+X, Cmd+X, Ctrl+A, Cmd+A, Ctrl+P, Cmd+P, Ctrl+Insert
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        (e.key === "c" ||
+          e.key === "C" ||
+          e.key === "x" ||
+          e.key === "X" ||
+          e.key === "a" ||
+          e.key === "A" ||
+          e.key === "p" ||
+          e.key === "P" ||
+          e.key === "Insert")
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    window.addEventListener("copy", handleCopy, true);
+    window.addEventListener("cut", handleCut, true);
+    window.addEventListener("dragstart", handleDragStart, true);
+    window.addEventListener("contextmenu", handleContextMenu, true);
+    window.addEventListener("keydown", handleKeyDown, true);
+
+    return () => {
+      window.removeEventListener("copy", handleCopy, true);
+      window.removeEventListener("cut", handleCut, true);
+      window.removeEventListener("dragstart", handleDragStart, true);
+      window.removeEventListener("contextmenu", handleContextMenu, true);
+      window.removeEventListener("keydown", handleKeyDown, true);
+    };
+  }, []);
+
   // Limit base width to avoid oversized rendering; scale multiplied on top
   const baseWidth = containerWidth > 0 ? Math.min(containerWidth - 32, 900) : 600;
   const pageWidth = Math.round(baseWidth * scale);
@@ -241,25 +352,30 @@ export function PdfReader({
     <>
       <div
         ref={containerRef}
-        className="flex-1 overflow-auto bg-stone-100 flex flex-col items-center py-6 px-4 min-h-0"
+        className="flex-1 overflow-auto flex flex-col items-center py-6 px-4 min-h-0 overscroll-contain"
+        style={{
+          background: "#111113",
+          WebkitOverflowScrolling: "touch",
+        }}
         id="pdf-reader-container"
+        onContextMenu={(e) => e.preventDefault()}
       >
         <Document
           file={pdfUrl}
           onLoadSuccess={({ numPages }) => onPageCountLoaded(numPages)}
           onLoadError={onLoadError}
           loading={
-            <div className="flex flex-col items-center justify-center gap-3 py-20 text-stone-400">
-              <Loader2 className="w-8 h-8 animate-spin" />
-              <p className="text-sm">Loading document…</p>
+            <div className="flex flex-col items-center justify-center gap-3 py-20">
+              <Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--accent)" }} />
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>Loading document…</p>
             </div>
           }
           error={
             <div className="flex flex-col items-center justify-center gap-2 py-20">
-              <p className="text-sm text-red-600 font-medium">
+              <p className="text-sm font-medium" style={{ color: "var(--red)" }}>
                 Failed to load PDF.
               </p>
-              <p className="text-xs text-stone-400">
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
                 The file may be unavailable or your session may have expired.
               </p>
             </div>
@@ -271,6 +387,11 @@ export function PdfReader({
             highlights={highlights}
             focusedHighlightId={focusedHighlightId}
             onHighlightClick={handleHighlightClick}
+            activeSelectionRects={
+              selection && selection.selectedPage === currentPage
+                ? selection.selectionRects
+                : undefined
+            }
           />
         </Document>
       </div>

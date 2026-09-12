@@ -67,23 +67,24 @@ function NoteMarker({ highlight, lastRect, onClick }: NoteMarkerProps) {
           onClick({ x: e.clientX, y: e.clientY });
         }}
         style={{
-          width: 18,
-          height: 18,
+          width: 22,
+          height: 22,
           borderRadius: "50%",
           backgroundColor: "#fef3c7",
           border: "1.5px solid #d97706",
           color: "#92400e",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.14)",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.18)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           cursor: "pointer",
           padding: 0,
+          touchAction: "manipulation",
           transition: "transform 0.15s ease, background-color 0.15s ease",
           transform: isHovered ? "scale(1.2)" : "scale(1)",
         }}
       >
-        <StickyNote style={{ width: 10, height: 10, fill: "#fde68a" }} />
+        <StickyNote style={{ width: 12, height: 12, fill: "#fde68a" }} />
       </button>
 
       {/* Hover preview tooltip */}
@@ -126,6 +127,8 @@ interface HighlightOverlayProps {
   focusedHighlightId?: number | null;
   /** Called when the user clicks on a highlight rect or its note marker */
   onHighlightClick?: (highlight: Highlight, position: { x: number; y: number }) => void;
+  /** Temporary active selection preview rectangles */
+  activeSelectionRects?: HighlightRectangle[];
 }
 
 /**
@@ -138,10 +141,11 @@ export function HighlightOverlay({
   pageNumber,
   focusedHighlightId,
   onHighlightClick,
+  activeSelectionRects,
 }: HighlightOverlayProps) {
   const pageHighlights = highlights.filter((h) => h.pageNumber === pageNumber);
 
-  if (pageHighlights.length === 0) return null;
+  if (pageHighlights.length === 0 && (!activeSelectionRects || activeSelectionRects.length === 0)) return null;
 
   return (
     <div
@@ -154,6 +158,30 @@ export function HighlightOverlay({
         zIndex: 2,
       }}
     >
+      {/* Temporary active selection preview while highlight toolbar is open */}
+      {activeSelectionRects && activeSelectionRects.length > 0 && (
+        <div aria-hidden="true">
+          {activeSelectionRects.map((rect, idx) => (
+            <div
+              key={`active-selection-${idx}`}
+              style={{
+                position: "absolute",
+                left: `${rect.x * 100}%`,
+                top: `${rect.y * 100}%`,
+                width: `${rect.width * 100}%`,
+                height: `${rect.height * 100}%`,
+                borderRadius: "2px",
+                backgroundColor: "rgba(59, 130, 246, 0.32)",
+                borderBottom: "2px solid #2563eb",
+                boxShadow: "0 0 0 1px rgba(37, 99, 235, 0.2)",
+                pointerEvents: "none",
+                zIndex: 6,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       {pageHighlights.map((highlight) => {
         const hasNote = Boolean(highlight.note && highlight.note.trim() !== "");
         const isFocused = focusedHighlightId === highlight.id;

@@ -1,7 +1,6 @@
 "use client";
 
 import { BookMarked, Highlighter, StickyNote, Bot, FileText, Layers } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface Tool {
   id: string;
@@ -56,7 +55,13 @@ interface ReaderToolsProps {
 
 export function ReaderTools({ activePanel = null, onTogglePanel }: ReaderToolsProps) {
   return (
-    <div className="flex flex-col border-l border-stone-200 bg-white w-14 shrink-0 select-none">
+    <div
+      className="flex flex-col w-14 shrink-0 select-none"
+      style={{
+        borderLeft: "1px solid var(--border-subtle)",
+        background: "var(--bg-surface)",
+      }}
+    >
       <div className="flex flex-col py-3 gap-0.5">
         {tools.map((tool) => {
           const isHighlight = tool.id === "highlight";
@@ -76,20 +81,28 @@ export function ReaderTools({ activePanel = null, onTogglePanel }: ReaderToolsPr
               title={tool.comingSoon ? `${tool.label} — coming soon` : tool.label}
               disabled={tool.comingSoon}
               onClick={isHighlight || isNote ? handleClick : undefined}
-              className={cn(
-                "flex flex-col items-center gap-1 py-2.5 px-1 text-[9px] font-medium transition-colors relative",
-                tool.comingSoon
-                  ? "text-stone-300 cursor-default"
+              className="flex flex-col items-center gap-1 py-2.5 px-1 text-[9px] font-medium transition-all duration-200 relative"
+              style={{
+                color: tool.comingSoon
+                  ? "var(--text-muted)"
                   : isActive
-                  ? "text-amber-700 bg-amber-50/80 font-semibold cursor-pointer border-r-2 border-amber-600"
-                  : "text-stone-500 hover:text-stone-900 hover:bg-stone-50 cursor-pointer"
-              )}
+                  ? "var(--accent)"
+                  : "var(--text-secondary)",
+                background: isActive ? "var(--accent-dim)" : "transparent",
+                borderRight: isActive ? "2px solid var(--accent)" : "2px solid transparent",
+                cursor: tool.comingSoon ? "default" : "pointer",
+              }}
               id={`reader-tool-${tool.id}`}
             >
               {tool.icon}
               <span className="leading-tight text-center">{tool.label}</span>
               {tool.comingSoon && (
-                <span className="text-[8px] text-stone-300 leading-none">soon</span>
+                <span
+                  className="text-[8px] leading-none"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  soon
+                </span>
               )}
             </button>
           );

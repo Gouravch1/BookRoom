@@ -43,16 +43,26 @@ export function Toaster() {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className={cn(
-            "pointer-events-auto rounded-lg border px-4 py-3 shadow-lg text-sm animate-in slide-in-from-bottom-2 fade-in",
-            t.variant === "destructive"
-              ? "bg-red-50 border-red-200 text-red-800"
-              : "bg-white border-stone-200 text-stone-900"
-          )}
+          className="pointer-events-auto rounded-xl px-4 py-3 shadow-2xl text-sm slide-in-from-bottom-2"
+          style={{
+            background: t.variant === "destructive"
+              ? "var(--red-dim)"
+              : "var(--bg-raised)",
+            border: t.variant === "destructive"
+              ? "1px solid rgba(248,113,113,0.25)"
+              : "1px solid var(--border-strong)",
+            color: t.variant === "destructive"
+              ? "var(--red)"
+              : "var(--text-primary)",
+            backdropFilter: "blur(16px)",
+            boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
+          }}
         >
           <div className="font-semibold">{t.title}</div>
           {t.description && (
-            <div className="mt-0.5 text-stone-600 text-xs">{t.description}</div>
+            <div className="mt-0.5 text-xs" style={{ color: "var(--text-secondary)" }}>
+              {t.description}
+            </div>
           )}
         </div>
       ))}

@@ -10,8 +10,7 @@ import { LibraryHeader } from "@/components/library/LibraryHeader";
 import { LibraryBookCard } from "@/components/library/LibraryBookCard";
 import { LibraryEmpty } from "@/components/library/LibraryEmpty";
 import { LibrarySkeleton } from "@/components/library/LibrarySkeleton";
-import { Button } from "@/components/ui/button";
-import { Upload, AlertCircle } from "lucide-react";
+import { Upload, AlertCircle, RefreshCw } from "lucide-react";
 
 export default function LibraryPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -20,14 +19,12 @@ export default function LibraryPage() {
     useLibrary();
   const [myBookIds, setMyBookIds] = useState<Set<number>>(new Set());
 
-  // Auth guard
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.replace("/login");
     }
   }, [authLoading, isAuthenticated, router]);
 
-  // Fetch library and owned book IDs
   useEffect(() => {
     if (!isAuthenticated) return;
     fetchLibrary();
@@ -41,8 +38,14 @@ export default function LibraryPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-stone-300 border-t-stone-700 rounded-full animate-spin" />
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "var(--bg-base)" }}
+      >
+        <div
+          className="w-7 h-7 border-2 rounded-full animate-spin"
+          style={{ borderColor: "var(--border-strong)", borderTopColor: "var(--accent)" }}
+        />
       </div>
     );
   }
@@ -50,25 +53,38 @@ export default function LibraryPage() {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ background: "var(--bg-base)" }}>
       <LibraryHeader />
 
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-8">
         {/* Page title row */}
-        <div className="flex items-end justify-between mb-6 gap-4 flex-wrap">
+        <div className="flex items-end justify-between mb-8 gap-4 flex-wrap animate-fade-up">
           <div>
-            <h1 className="text-2xl font-semibold text-stone-900 tracking-tight">
+            <h1
+              className="font-serif text-3xl sm:text-4xl"
+              style={{ color: "var(--text-primary)" }}
+            >
               My Library
             </h1>
-            <p className="text-sm text-stone-500 mt-0.5">
-              Your personal reading collection
+            <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
+              {!isLoading && library.length > 0
+                ? `${library.length} book${library.length !== 1 ? "s" : ""} in your collection`
+                : "Your personal reading collection"}
             </p>
           </div>
           <Link href="/books/upload">
-            <Button size="sm" id="upload-book-button">
+            <button
+              id="upload-book-button"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200"
+              style={{
+                background: "var(--accent)",
+                color: "#0e0e0f",
+                boxShadow: "0 4px 16px var(--accent-glow)",
+              }}
+            >
               <Upload className="w-3.5 h-3.5" />
               Upload Book
-            </Button>
+            </button>
           </Link>
         </div>
 
@@ -76,22 +92,41 @@ export default function LibraryPage() {
         {isLoading ? (
           <LibrarySkeleton />
         ) : error ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
-            <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center">
-              <AlertCircle className="w-6 h-6 text-red-400" />
+          <div className="flex flex-col items-center justify-center py-20 gap-4 text-center animate-fade-up">
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center"
+              style={{ background: "var(--red-dim)", border: "1px solid rgba(248,113,113,0.2)" }}
+            >
+              <AlertCircle className="w-7 h-7" style={{ color: "var(--red)" }} />
             </div>
-            <p className="text-stone-700 font-medium">
-              Failed to load your library
-            </p>
-            <p className="text-sm text-stone-500">{error}</p>
-            <Button variant="outline" onClick={fetchLibrary} className="mt-1">
+            <div>
+              <p
+                className="font-semibold mb-1"
+                style={{ color: "var(--text-primary)" }}
+              >
+                Failed to load your library
+              </p>
+              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                {error}
+              </p>
+            </div>
+            <button
+              onClick={fetchLibrary}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200"
+              style={{
+                background: "var(--bg-raised)",
+                border: "1px solid var(--border-default)",
+                color: "var(--text-secondary)",
+              }}
+            >
+              <RefreshCw className="w-4 h-4" />
               Try again
-            </Button>
+            </button>
           </div>
         ) : library.length === 0 ? (
           <LibraryEmpty />
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 stagger-children">
             {library.map((item) => (
               <LibraryBookCard
                 key={item.libraryItemId}

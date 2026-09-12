@@ -5,10 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { getApiErrorMessage } from "@/lib/api-client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { BookOpen, Eye, EyeOff } from "lucide-react";
+import { BookOpen, Eye, EyeOff, ArrowRight, AlertCircle } from "lucide-react";
 
 export function RegisterForm() {
   const { register } = useAuth();
@@ -39,25 +36,48 @@ export function RegisterForm() {
     }
   }
 
+  const inputStyle = {
+    background: "var(--bg-raised)",
+    border: "1px solid var(--border-default)",
+    borderRadius: "var(--radius-md)",
+    color: "var(--text-primary)",
+  };
+
   return (
-    <div className="w-full max-w-sm mx-auto">
-      {/* Logo */}
-      <div className="flex items-center gap-2 mb-8">
-        <div className="w-8 h-8 bg-stone-900 rounded-lg flex items-center justify-center">
-          <BookOpen className="w-4 h-4 text-white" />
+    <div className="w-full max-w-sm animate-fade-up">
+      {/* Mobile logo */}
+      <div className="flex items-center gap-2.5 mb-10 lg:hidden">
+        <div
+          className="w-8 h-8 rounded-lg flex items-center justify-center"
+          style={{ background: "var(--accent)", boxShadow: "0 4px 12px var(--accent-glow)" }}
+        >
+          <BookOpen className="w-4 h-4" style={{ color: "#0e0e0f" }} />
         </div>
-        <span className="text-lg font-semibold text-stone-900 tracking-tight">BookRoom</span>
+        <span className="font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
+          BookRoom
+        </span>
       </div>
 
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-stone-900 mb-1">Create your library</h1>
-        <p className="text-sm text-stone-500">Join BookRoom and start reading privately</p>
+      {/* Header */}
+      <div className="mb-8">
+        <h1
+          className="font-serif text-3xl mb-2"
+          style={{ color: "var(--text-primary)" }}
+        >
+          Create your library
+        </h1>
+        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+          Join BookRoom and start reading privately
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="name">Full name</Label>
-          <Input
+        {/* Name */}
+        <div className="flex flex-col gap-2">
+          <label htmlFor="name" className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+            Full name
+          </label>
+          <input
             id="name"
             type="text"
             autoComplete="name"
@@ -65,12 +85,17 @@ export function RegisterForm() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
+            className="h-11 px-4 text-sm w-full"
+            style={inputStyle}
           />
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="email">Email</Label>
-          <Input
+        {/* Email */}
+        <div className="flex flex-col gap-2">
+          <label htmlFor="email" className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+            Email
+          </label>
+          <input
             id="email"
             type="email"
             autoComplete="email"
@@ -78,13 +103,18 @@ export function RegisterForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            className="h-11 px-4 text-sm w-full"
+            style={inputStyle}
           />
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="password">Password</Label>
+        {/* Password */}
+        <div className="flex flex-col gap-2">
+          <label htmlFor="password" className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+            Password
+          </label>
           <div className="relative">
-            <Input
+            <input
               id="password"
               type={showPassword ? "text" : "password"}
               autoComplete="new-password"
@@ -92,12 +122,14 @@ export function RegisterForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="pr-10"
+              className="h-11 px-4 pr-11 text-sm w-full"
+              style={inputStyle}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+              style={{ color: "var(--text-muted)" }}
               tabIndex={-1}
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -105,20 +137,58 @@ export function RegisterForm() {
           </div>
         </div>
 
+        {/* Error */}
         {error && (
-          <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+          <div
+            className="flex items-start gap-2.5 rounded-xl px-4 py-3 text-sm animate-scale-in"
+            style={{
+              background: "var(--red-dim)",
+              border: "1px solid rgba(248,113,113,0.2)",
+              color: "var(--red)",
+            }}
+          >
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             {error}
           </div>
         )}
 
-        <Button type="submit" disabled={isLoading} className="w-full mt-1">
-          {isLoading ? "Creating account…" : "Create account"}
-        </Button>
+        {/* Submit */}
+        <button
+          type="submit"
+          disabled={isLoading}
+          id="register-submit"
+          className="h-11 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 mt-1"
+          style={{
+            background: isLoading ? "var(--bg-hover)" : "var(--accent)",
+            color: isLoading ? "var(--text-secondary)" : "#0e0e0f",
+            cursor: isLoading ? "not-allowed" : "pointer",
+            boxShadow: isLoading ? "none" : "0 4px 16px var(--accent-glow)",
+          }}
+        >
+          {isLoading ? (
+            <>
+              <span
+                className="w-4 h-4 border-2 rounded-full animate-spin"
+                style={{ borderColor: "var(--text-muted)", borderTopColor: "var(--text-secondary)" }}
+              />
+              Creating account…
+            </>
+          ) : (
+            <>
+              Create account
+              <ArrowRight className="w-4 h-4" />
+            </>
+          )}
+        </button>
       </form>
 
-      <p className="text-sm text-stone-500 text-center mt-6">
+      <p className="text-sm text-center mt-7" style={{ color: "var(--text-muted)" }}>
         Already have an account?{" "}
-        <Link href="/login" className="font-medium text-stone-900 hover:underline">
+        <Link
+          href="/login"
+          className="font-medium transition-colors"
+          style={{ color: "var(--accent)" }}
+        >
           Sign in
         </Link>
       </p>
