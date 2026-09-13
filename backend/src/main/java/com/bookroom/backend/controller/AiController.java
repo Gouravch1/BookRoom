@@ -24,4 +24,18 @@ public class AiController {
         String response = aiService.chat(aiChatRequest.getMessage());
         return ResponseEntity.ok(new AiChatResponse(response));
     }
+
+    // Explain Text
+    @PostMapping("/explain")
+    public ResponseEntity<AiChatResponse> explain(@RequestBody AiChatRequest request){
+        String response = aiService.explainText(request.getMessage());
+        return ResponseEntity.ok(new AiChatResponse(response));
+    }
+
+    // Summarize Text
+    @PostMapping("/summarize")
+    public ResponseEntity<AiChatResponse> summarize(@RequestBody AiChatRequest request) {
+        String response = aiService.summarizeText(request.getMessage());
+        return ResponseEntity.ok(new AiChatResponse(response));
+    }
 }

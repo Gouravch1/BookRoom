@@ -9,4 +9,5 @@ import lombok.Setter;
 @NoArgsConstructor
 public class AiChatRequest {
     private String message;
+    private String selectedText;
 }

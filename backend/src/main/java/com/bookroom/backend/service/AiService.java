@@ -21,4 +21,42 @@ public class AiService {
                 """.formatted(message);
         return llmProvider.generate(prompt);
     }
+
+    public String explainText(String selectedText){
+        String prompt = """
+            You are BookRoom's reading assistant.
+
+            Explain the following selected text clearly and simply.
+
+            Rules:
+            - Stay focused on the provided text.
+            - Explain difficult concepts in simple language.
+            - Do not invent information that is not supported by the text.
+            - Use examples when they genuinely help.
+
+            Selected text:
+            %s
+            """.formatted(selectedText);
+
+       return llmProvider.generate(prompt);
+    }
+
+    public String summarizeText(String selectedText){
+         String prompt = """
+            You are BookRoom's reading assistant.
+
+            Summarize the following selected text.
+
+            Rules:
+            - Keep the original meaning.
+            - Remove unnecessary repetition.
+            - Do not add information that is not present in the text.
+            - Make the summary concise but useful.
+
+            Selected text:
+            %s
+            """.formatted(selectedText);
+
+        return llmProvider.generate(prompt);
+    }
 }
