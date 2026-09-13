@@ -1,9 +1,12 @@
 package com.bookroom.backend.controller;
 
 import com.bookroom.backend.dto.Request.AiChatRequest;
+import com.bookroom.backend.dto.Request.PageAiRequest;
 import com.bookroom.backend.dto.Response.AiChatResponse;
 import com.bookroom.backend.service.AiService;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,5 +40,23 @@ public class AiController {
     public ResponseEntity<AiChatResponse> summarize(@RequestBody AiChatRequest request) {
         String response = aiService.summarizeText(request.getMessage());
         return ResponseEntity.ok(new AiChatResponse(response));
+    }
+
+    // Explain Page
+    @PostMapping("/page/explain")
+    public ResponseEntity<AiChatResponse> explainPage(
+            @RequestBody PageAiRequest request,
+            Authentication authentication
+    ) {
+
+        String response = aiService.explainPage(
+                request.getBookId(),
+                request.getPageNumber(),
+                authentication.getName()
+        );
+
+        return ResponseEntity.ok(
+                new AiChatResponse(response)
+        );
     }
 }
