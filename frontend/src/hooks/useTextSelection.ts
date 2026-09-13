@@ -104,20 +104,29 @@ export function useTextSelection({
 
       const range = selection.getRangeAt(0);
 
+      // ── Containment guard ──────────────────────────────────────────────────
+      // Only show the highlight toolbar when the selection is physically inside
+      // the PDF reader container. This prevents the toolbar from appearing when
+      // the user selects text in the AI panel, notes panel, or any other UI.
+      const container = containerRef.current;
+      if (
+        !container ||
+        (!container.contains(range.startContainer) &&
+          !container.contains(range.endContainer) &&
+          !container.contains(range.commonAncestorContainer))
+      ) {
+        return;
+      }
+
       // Find the page container by walking up from anchor, commonAncestor, or endContainer
-      let pageInfo =
+      const pageInfo =
         findPageContainer(range.startContainer) ||
         findPageContainer(range.commonAncestorContainer) ||
         findPageContainer(range.endContainer);
 
-      // Fallback: if not found by tree walk, query the visible page container directly
-      if (!pageInfo && containerRef.current) {
-        const fallbackPageEl = containerRef.current.querySelector<HTMLElement>("[data-page-number]");
-        if (fallbackPageEl) {
-          const parsed = parseInt(fallbackPageEl.getAttribute("data-page-number") || "1", 10);
-          pageInfo = { el: fallbackPageEl, pageNumber: isNaN(parsed) ? 1 : parsed };
-        }
-      }
+      // Note: the old fallback that queried [data-page-number] regardless of
+      // where the selection was has been intentionally removed — it caused the
+      // highlight toolbar to fire on any selection anywhere on the page.
 
       if (!pageInfo) {
         return;

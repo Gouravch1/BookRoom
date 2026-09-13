@@ -30,6 +30,8 @@ interface PdfReaderProps {
   updateNote?: (highlightId: number, note: string | null) => Promise<Highlight | null>;
   onPageCountLoaded: (total: number) => void;
   onLoadError: (error: Error) => void;
+  /** Called when user clicks Explain or Summarize on selected text */
+  onAiAction?: (action: "explain" | "summarize", text: string) => void;
 }
 
 export function PdfReader({
@@ -46,6 +48,7 @@ export function PdfReader({
   updateNote: propUpdateNote,
   onPageCountLoaded,
   onLoadError,
+  onAiAction,
 }: PdfReaderProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState<number>(0);
@@ -109,8 +112,17 @@ export function PdfReader({
     [selection, addHighlight, bookId, clearSelection]
   );
 
+  // ─── Handle AI actions on selected text ──────────────────────────────────────
+  const handleAiExplain = useCallback(() => {
+    if (!selection) return;
+    onAiAction?.("explain", selection.selectedText);
+  }, [selection, onAiAction]);
 
-  // ─── Handle click on existing highlight / note marker ─────────────────────────
+  const handleAiSummarize = useCallback(() => {
+    if (!selection) return;
+    onAiAction?.("summarize", selection.selectedText);
+  }, [selection, onAiAction]);
+
   const handleHighlightClick = useCallback(
     (highlight: Highlight, position: { x: number; y: number }) => {
       // Close the new-highlight toolbar first
@@ -405,6 +417,8 @@ export function PdfReader({
             setSelection(null);
             clearSelection();
           }}
+          onExplain={onAiAction ? handleAiExplain : undefined}
+          onSummarize={onAiAction ? handleAiSummarize : undefined}
         />
       )}
 

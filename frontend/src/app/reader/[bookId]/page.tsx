@@ -10,6 +10,8 @@ import { ReaderControls } from "@/components/reader/ReaderControls";
 import { ReaderTools } from "@/components/reader/ReaderTools";
 import { highlightService } from "@/services/highlight.service";
 import { NotesPanel } from "@/components/reader/NotesPanel";
+import { AiPanel } from "@/components/reader/AiPanel";
+import type { AiPanelState } from "@/components/reader/AiPanel";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, BookOpen, Loader2 } from "lucide-react";
@@ -71,7 +73,13 @@ export default function ReaderPage({ params, searchParams }: ReaderPageProps) {
 
   const [scale, setScale] = useState(DEFAULT_SCALE);
   const [pdfTotalPages, setPdfTotalPages] = useState(0);
-  const [activePanel, setActivePanel] = useState<"highlights" | "notes" | null>(null);
+
+  // ─── Panel state ────────────────────────────────────────────────────────────
+  // Only one panel can be open at a time: notes OR ai
+  const [activeNotesPanel, setActiveNotesPanel] = useState<"highlights" | "notes" | null>(null);
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
+  const [aiPanelState, setAiPanelState] = useState<AiPanelState | undefined>(undefined);
+
   const [focusedHighlightId, setFocusedHighlightId] = useState<number | null>(null);
 
   // Auth guard
@@ -88,6 +96,8 @@ export default function ReaderPage({ params, searchParams }: ReaderPageProps) {
       highlightService.prefetchHighlights(bookId);
     }
   }, [isAuthenticated, bookId, initialize, isReset]);
+
+  // ─── Zoom / fullscreen ──────────────────────────────────────────────────────
 
   const handleZoomIn = useCallback(() => {
     setScale((s) => Math.min(s + ZOOM_STEP, MAX_SCALE));
@@ -107,16 +117,15 @@ export default function ReaderPage({ params, searchParams }: ReaderPageProps) {
     }
   }, []);
 
-  const handlePageCountLoaded = useCallback(
-    (total: number) => {
-      setPdfTotalPages(total);
-    },
-    []
-  );
+  const handlePageCountLoaded = useCallback((total: number) => {
+    setPdfTotalPages(total);
+  }, []);
 
   const handlePdfLoadError = useCallback((err: Error) => {
     console.error("PDF load error:", err);
   }, []);
+
+  // ─── Highlights / Notes panel ───────────────────────────────────────────────
 
   // Jump to page & focus highlight when clicked in Highlights or Notes panel
   const handleSelectHighlight = useCallback(
@@ -128,8 +137,50 @@ export default function ReaderPage({ params, searchParams }: ReaderPageProps) {
   );
 
   const handleTogglePanel = useCallback((panel: "highlights" | "notes") => {
-    setActivePanel((curr) => (curr === panel ? null : panel));
+    setActiveNotesPanel((curr) => (curr === panel ? null : panel));
+    // Close AI panel when notes open
+    setAiPanelOpen(false);
   }, []);
+
+  // ─── AI panel helpers ───────────────────────────────────────────────────────
+
+  const openAiPanel = useCallback((state: AiPanelState) => {
+    setAiPanelState(state);
+    setAiPanelOpen(true);
+    // Close notes panel when AI opens
+    setActiveNotesPanel(null);
+  }, []);
+
+  const closeAiPanel = useCallback(() => {
+    setAiPanelOpen(false);
+  }, []);
+
+  // Called from PdfReader when user clicks Explain/Summarize on selected text
+  const handleAiAction = useCallback(
+    (action: "explain" | "summarize", text: string) => {
+      openAiPanel({
+        mode: action === "explain" ? "explain-selection" : "summarize-selection",
+        context: text,
+      });
+    },
+    [openAiPanel]
+  );
+
+  // Called from ReaderTools "Explain" button
+  const handleExplainPage = useCallback(() => {
+    openAiPanel({
+      mode: "explain-page",
+      bookId,
+      pageNumber: currentPage,
+    });
+  }, [openAiPanel, bookId, currentPage]);
+
+  // Called from ReaderTools "Ask AI" button
+  const handleOpenAiChat = useCallback(() => {
+    openAiPanel({ mode: "chat" });
+  }, [openAiPanel]);
+
+  // ─── Finish book ────────────────────────────────────────────────────────────
 
   const totalPages = Math.max(book?.totalPages ?? 0, pdfTotalPages);
 
@@ -140,6 +191,8 @@ export default function ReaderPage({ params, searchParams }: ReaderPageProps) {
       duration: 4000,
     });
   }, [completeBook, totalPages]);
+
+  // ─── Render guards ──────────────────────────────────────────────────────────
 
   // Loading — auth check
   if (authLoading) {
@@ -223,11 +276,11 @@ export default function ReaderPage({ params, searchParams }: ReaderPageProps) {
         progress={progress}
         currentPage={currentPage}
         highlightsCount={highlights.length}
-        activePanel={activePanel}
+        activePanel={activeNotesPanel}
         onTogglePanel={handleTogglePanel}
       />
 
-      {/* Body: PDF + Notes panel + sidebar tools */}
+      {/* Body: PDF + Notes panel + AI panel + sidebar tools */}
       <div className="flex-1 flex min-h-0 relative overflow-hidden">
         {/* PDF viewer */}
         <PdfReader
@@ -244,26 +297,36 @@ export default function ReaderPage({ params, searchParams }: ReaderPageProps) {
           updateNote={updateNote}
           onPageCountLoaded={handlePageCountLoaded}
           onLoadError={handlePdfLoadError}
+          onAiAction={handleAiAction}
         />
 
         {/* Highlights & Notes Panel */}
         <NotesPanel
           highlights={highlights}
-          isOpen={activePanel !== null}
-          activeTab={activePanel ?? "highlights"}
-          onTabChange={(tab) => setActivePanel(tab)}
+          isOpen={activeNotesPanel !== null}
+          activeTab={activeNotesPanel ?? "highlights"}
+          onTabChange={(tab) => setActiveNotesPanel(tab)}
           currentPage={currentPage}
-          onClose={() => setActivePanel(null)}
+          onClose={() => setActiveNotesPanel(null)}
           onSelectHighlight={handleSelectHighlight}
           onDeleteHighlight={removeHighlight}
           onDeleteNote={(id) => updateNote(id, null)}
         />
 
+        {/* AI Panel */}
+        <AiPanel
+          isOpen={aiPanelOpen}
+          initialState={aiPanelState}
+          onClose={closeAiPanel}
+        />
+
         {/* Tools sidebar (desktop) */}
         <div className="hidden sm:flex">
           <ReaderTools
-            activePanel={activePanel}
+            activePanel={activeNotesPanel}
             onTogglePanel={handleTogglePanel}
+            onOpenAiChat={handleOpenAiChat}
+            onExplainPage={handleExplainPage}
           />
         </div>
       </div>

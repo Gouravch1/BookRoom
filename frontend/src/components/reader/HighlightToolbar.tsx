@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { HighlightColor } from "@/types/highlight";
 import { getHighlightColorStyle } from "./HighlightOverlay";
-import { StickyNote, Check, X, CornerDownLeft } from "lucide-react";
+import { StickyNote, Check, X, CornerDownLeft, Lightbulb, FileText } from "lucide-react";
 
 const COLORS: { color: HighlightColor; label: string }[] = [
   { color: "YELLOW", label: "Yellow" },
@@ -20,6 +20,9 @@ interface HighlightToolbarProps {
   position: { x: number; y: number };
   onColorSelect: (color: HighlightColor, note?: string | null) => void;
   onDismiss: () => void;
+  /** AI actions — optional, only shown when provided */
+  onExplain?: () => void;
+  onSummarize?: () => void;
 }
 
 /**
@@ -31,6 +34,8 @@ export function HighlightToolbar({
   position,
   onColorSelect,
   onDismiss,
+  onExplain,
+  onSummarize,
 }: HighlightToolbarProps) {
   const ref = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -277,6 +282,42 @@ export function HighlightToolbar({
               <StickyNote className="w-3.5 h-3.5" />
               <span>Note</span>
             </button>
+
+            {/* AI — Explain */}
+            {onExplain && (
+              <button
+                id="highlight-toolbar-explain"
+                type="button"
+                onClick={() => { onExplain(); onDismiss(); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold active:scale-95 shrink-0 transition-all"
+                style={{
+                  background: "rgba(168,139,250,0.12)",
+                  border: "1px solid rgba(168,139,250,0.28)",
+                  color: "#a78bfa",
+                }}
+              >
+                <Lightbulb className="w-3.5 h-3.5" />
+                <span>Explain</span>
+              </button>
+            )}
+
+            {/* AI — Summarize */}
+            {onSummarize && (
+              <button
+                id="highlight-toolbar-summarize"
+                type="button"
+                onClick={() => { onSummarize(); onDismiss(); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold active:scale-95 shrink-0 transition-all"
+                style={{
+                  background: "rgba(52,211,153,0.10)",
+                  border: "1px solid rgba(52,211,153,0.25)",
+                  color: "var(--emerald)",
+                }}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Summarize</span>
+              </button>
+            )}
 
             {/* Close button */}
             <button
@@ -533,6 +574,62 @@ export function HighlightToolbar({
               <StickyNote className="w-3.5 h-3.5" />
               <span>Note</span>
             </button>
+
+            {/* AI — Explain (desktop) */}
+            {onExplain && (
+              <button
+                id="highlight-toolbar-explain"
+                type="button"
+                onClick={() => { onExplain(); onDismiss(); }}
+                title="Explain with AI"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  padding: "4px 8px",
+                  borderRadius: 6,
+                  backgroundColor: "rgba(168,139,250,0.12)",
+                  border: "1px solid rgba(168,139,250,0.28)",
+                  color: "#a78bfa",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                  flexShrink: 0,
+                }}
+              >
+                <Lightbulb className="w-3.5 h-3.5" />
+                <span>Explain</span>
+              </button>
+            )}
+
+            {/* AI — Summarize (desktop) */}
+            {onSummarize && (
+              <button
+                id="highlight-toolbar-summarize"
+                type="button"
+                onClick={() => { onSummarize(); onDismiss(); }}
+                title="Summarize with AI"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  padding: "4px 8px",
+                  borderRadius: 6,
+                  backgroundColor: "rgba(52,211,153,0.10)",
+                  border: "1px solid rgba(52,211,153,0.25)",
+                  color: "#34d399",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                  flexShrink: 0,
+                }}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Summarize</span>
+              </button>
+            )}
           </div>
         )}
       </div>
