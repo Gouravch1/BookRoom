@@ -28,7 +28,7 @@ export function RegisterForm() {
     setIsLoading(true);
     try {
       await register(name.trim(), email.trim(), password);
-      router.push("/library");
+      router.push("/free-books");
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {

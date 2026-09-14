@@ -23,7 +23,7 @@ export function LoginForm() {
     setIsLoading(true);
     try {
       await login(email, password);
-      router.push("/library");
+      router.push("/free-books");
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {

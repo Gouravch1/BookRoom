@@ -2,6 +2,11 @@ import { apiClient, multipartConfig } from "@/lib/api-client";
 import type { BookResponse, BookRequest, UploadBookRequest } from "@/types/book";
 
 export const bookService = {
+  async getFreeBooks(): Promise<BookResponse[]> {
+    const res = await apiClient.get<BookResponse[]>("/api/books/free");
+    return res.data;
+  },
+
   async uploadBook(data: UploadBookRequest): Promise<BookResponse> {
     const form = new FormData();
     form.append("file", data.file);

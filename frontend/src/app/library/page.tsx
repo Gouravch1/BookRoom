@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { useLibrary } from "@/hooks/useLibrary";
 import { bookService } from "@/services/book.service";
-import { LibraryHeader } from "@/components/library/LibraryHeader";
+import { AppHeader } from "@/components/shared/AppHeader";
 import { LibraryBookCard } from "@/components/library/LibraryBookCard";
 import { LibraryEmpty } from "@/components/library/LibraryEmpty";
 import { LibrarySkeleton } from "@/components/library/LibrarySkeleton";
@@ -54,7 +54,7 @@ export default function LibraryPage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "var(--bg-base)" }}>
-      <LibraryHeader />
+      <AppHeader />
 
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-8">
         {/* Page title row */}

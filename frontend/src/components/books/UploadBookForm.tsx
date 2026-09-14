@@ -9,7 +9,11 @@ import { getApiErrorMessage } from "@/lib/api-client";
 import { PdfDropzone } from "@/components/books/PdfDropzone";
 import { ArrowLeft, CheckCircle, Loader2, AlertCircle } from "lucide-react";
 
-export function UploadBookForm() {
+interface UploadBookFormProps {
+  redirectTo?: string;
+}
+
+export function UploadBookForm({ redirectTo = "/library" }: UploadBookFormProps = {}) {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
@@ -39,10 +43,13 @@ export function UploadBookForm() {
         author: author.trim() || undefined,
       });
 
-      try {
-        await libraryService.addToLibrary(uploaded.id);
-      } catch {
-        // if already in library, ignore
+      // Only auto-add to personal library if not an admin dashboard upload
+      if (redirectTo !== "/admin") {
+        try {
+          await libraryService.addToLibrary(uploaded.id);
+        } catch {
+          // if already in library, ignore
+        }
       }
 
       clearInterval(progressInterval);
@@ -50,7 +57,7 @@ export function UploadBookForm() {
       setSuccess(true);
 
       setTimeout(() => {
-        router.push("/library");
+        router.push(redirectTo);
       }, 1200);
     } catch (err) {
       clearInterval(progressInterval);
@@ -89,7 +96,11 @@ export function UploadBookForm() {
             Book uploaded!
           </h2>
           <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-            Redirecting to your library…
+            {redirectTo === "/admin"
+              ? "Redirecting to admin dashboard…"
+              : redirectTo === "/private"
+              ? "Redirecting to private bookshelf…"
+              : "Redirecting to your library…"}
           </p>
         </div>
       </div>
@@ -188,7 +199,7 @@ export function UploadBookForm() {
 
       {/* Buttons */}
       <div className="flex gap-3 pt-1">
-        <Link href="/library" className="flex-1">
+        <Link href={redirectTo} className="flex-1">
           <button
             type="button"
             className="w-full h-11 rounded-xl text-sm font-medium transition-all duration-200"

@@ -33,20 +33,36 @@ export function LibraryEmpty() {
         Upload your first PDF and start building your private reading sanctuary.
       </p>
 
-      <Link href="/books/upload">
-        <button
-          id="upload-first-book"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200"
-          style={{
-            background: "var(--accent)",
-            color: "#0e0e0f",
-            boxShadow: "0 4px 20px var(--accent-glow)",
-          }}
-        >
-          <Upload className="w-4 h-4" />
-          Upload your first book
-        </button>
-      </Link>
+      <div className="flex items-center gap-3 flex-wrap justify-center">
+        <Link href="/free-books">
+          <button
+            id="browse-free-books"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200"
+            style={{
+              background: "var(--accent)",
+              color: "#0e0e0f",
+              boxShadow: "0 4px 20px var(--accent-glow)",
+            }}
+          >
+            <BookOpen className="w-4 h-4" />
+            Explore Free Books
+          </button>
+        </Link>
+        <Link href="/books/upload">
+          <button
+            id="upload-first-book"
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-medium transition-all duration-200"
+            style={{
+              background: "var(--bg-raised)",
+              border: "1px solid var(--border-default)",
+              color: "var(--text-secondary)",
+            }}
+          >
+            <Upload className="w-4 h-4" />
+            Upload PDF
+          </button>
+        </Link>
+      </div>
     </div>
   );
 }
