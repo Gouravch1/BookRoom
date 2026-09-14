@@ -2,7 +2,7 @@ package com.bookroom.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
+import com.bookroom.backend.entity.BookUploadSource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,8 +39,9 @@ public class Book {
     private String isbn;
 
     private String language;
-
-    private String source;
+    
+    @Enumerated(EnumType.STRING)
+    private BookUploadSource source;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uploaded_by")

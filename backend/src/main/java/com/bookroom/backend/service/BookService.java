@@ -19,6 +19,8 @@ import com.bookroom.backend.entity.Book;
 import com.bookroom.backend.entity.User;
 import com.bookroom.backend.repository.BookRepository;
 import com.bookroom.backend.repository.UserRepository;
+import com.bookroom.backend.entity.BookUploadSource;
+import com.bookroom.backend.entity.Role;
 
 @Service
 public class BookService {
@@ -43,7 +45,7 @@ public class BookService {
                 .coverUrl(book.getCoverUrl())
                 .isbn(book.getIsbn())
                 .language(book.getLanguage())
-                .source(book.getSource())
+                .source(book.getSource() != null ? book.getSource().name() : null)
                 .totalPages(book.getTotalPages())
                 .build();
     }
@@ -59,7 +61,7 @@ public class BookService {
                 .pdfUrl(request.getPdfUrl())
                 .isbn(request.getIsbn())
                 .language(request.getLanguage())
-                .source(request.getSource())
+                .source(BookUploadSource.USER_UPLOAD)
                 .uploadedBy(user)
                 .build();
         Book savedBook = bookRepository.save(book);
@@ -122,10 +124,15 @@ public class BookService {
 
         StoredFile storedFile = fileStorageService.upload(file);
 
+        BookUploadSource source =
+        user.getRole() == Role.ADMIN
+                ? BookUploadSource.ADMIN_UPLOAD
+                : BookUploadSource.USER_UPLOAD;
+
         Book book = Book.builder()
                 .title(title)
                 .author(author)
-                .source("USER_UPLOAD")
+                .source(source)
                 .storagePublicId(storedFile.publicId())
                 .storageVersion(storedFile.version())
                 .totalPages(totalPages)
@@ -193,10 +200,6 @@ public class BookService {
 
         if (request.getLanguage() != null && !request.getLanguage().isEmpty()) {
             book.setLanguage(request.getLanguage());
-        }
-
-        if (request.getSource() != null && !request.getSource().isEmpty()) {
-            book.setSource(request.getSource());
         }
 
         Book updatedBook = bookRepository.save(book);

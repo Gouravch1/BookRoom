@@ -6,6 +6,7 @@ import com.bookroom.backend.dto.Response.AuthResponse;
 import com.bookroom.backend.dto.Request.LoginRequest;
 import com.bookroom.backend.dto.Request.RegisterRequest;
 import com.bookroom.backend.dto.Response.UserResponse;
+import com.bookroom.backend.entity.Role;
 import com.bookroom.backend.entity.User;
 import com.bookroom.backend.repository.UserRepository;
 import com.bookroom.backend.security.JwtService;
@@ -40,6 +41,8 @@ public class AuthService {
                 .email(request.getEmail())
                 .password(encodedPassword)
                 .build();
+
+       user.setRole(Role.USER);        
        User savedUser =  userRepository.save(user);
         return UserResponse.builder()
                 .id(savedUser.getId())
