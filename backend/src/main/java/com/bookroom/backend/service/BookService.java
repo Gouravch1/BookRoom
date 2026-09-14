@@ -78,6 +78,14 @@ public class BookService {
                 .toList();
     }
 
+    // Get free Books
+    public List<BookResponse> getFreeBooks() {
+    return bookRepository.findBySource(BookUploadSource.ADMIN_UPLOAD)
+            .stream()
+            .map(this::mapToResponse)
+            .toList();
+   }
+
     // Delete Book
     @Transactional
     public void deleteBook(Long bookId, String email) {

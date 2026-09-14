@@ -37,7 +37,13 @@ public class BookController {
         List<BookResponse> books = bookService.getAllBooks();
         return ResponseEntity.ok(books);
     }
-
+    
+    // Get free books
+    @GetMapping("/free")
+    public ResponseEntity<List<BookResponse>> getFreeBooks(){
+        List<BookResponse> books = bookService.getFreeBooks();
+        return ResponseEntity.ok(books);
+    }
 
     // upload book (in pdf format)
     @PostMapping(value = "/upload" , consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
