@@ -8,6 +8,7 @@ import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.bookroom.backend.common.BookAccessDeniedException;
@@ -76,6 +77,7 @@ public class BookService {
     }
 
     // Delete Book
+    @Transactional
     public void deleteBook(Long bookId, String email) {
 
         Book book = bookRepository.findById(bookId)
