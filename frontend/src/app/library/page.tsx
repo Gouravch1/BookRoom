@@ -15,7 +15,7 @@ import { Upload, AlertCircle, RefreshCw } from "lucide-react";
 export default function LibraryPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const { library, isLoading, error, fetchLibrary, removeFromLibrary } =
+  const { library, isLoading, error, fetchLibrary, removeFromLibraryOptimistic } =
     useLibrary();
   const [myBookIds, setMyBookIds] = useState<Set<number>>(new Set());
 
@@ -132,7 +132,7 @@ export default function LibraryPage() {
                 key={item.libraryItemId}
                 item={item}
                 isOwned={myBookIds.has(item.bookId)}
-                onRemoved={removeFromLibrary}
+                onRemoved={removeFromLibraryOptimistic}
                 onUpdated={fetchLibrary}
               />
             ))}

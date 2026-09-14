@@ -17,7 +17,13 @@ export function PdfDropzone({ onFileSelected, selectedFile, onClear }: PdfDropzo
   const validateAndSelect = useCallback(
     (file: File) => {
       setDragError("");
-      if (file.type !== "application/pdf") {
+      // Mobile browsers (Android/iOS) sometimes return empty string or wrong
+      // MIME type for PDFs — fallback to checking the file extension.
+      const isPdf =
+        file.type === "application/pdf" ||
+        file.type === "application/octet-stream" ||
+        file.name.toLowerCase().endsWith(".pdf");
+      if (!isPdf) {
         setDragError("Only PDF files are supported.");
         return;
       }

@@ -82,11 +82,13 @@ export function getApiErrorMessage(error: unknown): string {
   return "An unexpected error occurred.";
 }
 
-// For multipart uploads — do not set Content-Type (browser does it)
+// For multipart uploads — do NOT manually set Content-Type.
+// The browser/axios sets it automatically with the correct boundary.
+// Setting it manually (without boundary) breaks Spring's multipart parser.
 export function multipartConfig(): AxiosRequestConfig {
   return {
     headers: {
-      "Content-Type": "multipart/form-data",
+      "Content-Type": undefined, // let axios + browser handle it
     },
   };
 }

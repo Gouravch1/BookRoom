@@ -32,5 +32,11 @@ export function useLibrary() {
     []
   );
 
-  return { library, isLoading, error, fetchLibrary, removeFromLibrary };
+  // Pure local removal — use this when the calling code has already made
+  // the API request itself (e.g. after deleteBook or removeFromLibrary in the card).
+  const removeFromLibraryOptimistic = useCallback((bookId: number) => {
+    setLibrary((prev) => prev.filter((item) => item.bookId !== bookId));
+  }, []);
+
+  return { library, isLoading, error, fetchLibrary, removeFromLibrary, removeFromLibraryOptimistic };
 }

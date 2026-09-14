@@ -28,7 +28,7 @@ import { EditBookDialog } from "@/components/library/EditBookDialog";
 interface LibraryBookCardProps {
   item: LibraryBookResponse;
   isOwned: boolean;
-  onRemoved: (bookId: number) => void;
+  onRemoved: (bookId: number) => void;  // pure optimistic UI update
   onUpdated: () => void;
 }
 
@@ -58,7 +58,7 @@ export function LibraryBookCard({
     setIsRemoving(true);
     try {
       await libraryService.removeFromLibrary(item.bookId);
-      onRemoved(item.bookId);
+      onRemoved(item.bookId);  // optimistic UI removal
       toast({ title: "Removed from library" });
     } catch (err) {
       toast({ title: "Error", description: getApiErrorMessage(err), variant: "destructive" });
@@ -72,7 +72,7 @@ export function LibraryBookCard({
     setIsDeleting(true);
     try {
       await bookService.deleteBook(item.bookId);
-      onRemoved(item.bookId);
+      onRemoved(item.bookId);  // optimistic UI removal — no separate library API call needed
       toast({ title: "Book deleted" });
     } catch (err) {
       toast({ title: "Error", description: getApiErrorMessage(err), variant: "destructive" });
