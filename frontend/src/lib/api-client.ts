@@ -76,6 +76,7 @@ export function getApiErrorMessage(error: unknown): string {
     if (status === 403) return "You don't have access to this resource.";
     if (status === 404) return "Resource not found.";
     if (status === 409) return "Email or account already exists.";
+    if (status === 429) return "⏱️ AI rate limit reached. Too many requests — please wait a moment and try again.";
     if (status === 400) return "Invalid request. Please check your input.";
     if (status && status >= 500) return "Server error. Please try again later.";
   }
